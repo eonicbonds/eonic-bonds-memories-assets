@@ -19,28 +19,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const emailInput = document.getElementById("player-email");
   const winMessageInput = document.getElementById("win-message");
 
-  // Auto-generate a session id to link uploads, checkout, and the game
-  function assignAutoSessionId() {
-    const input = document.getElementById("session-id");
-    if (!input) {
-      // try again in 50ms until Webflow finishes injecting HTML
-      setTimeout(assignAutoSessionId, 50);
-      return;
-    }
-
-    if (!input.value) {
-      const timestampPart = Date.now().toString(36);
-      const randomSuffix = Math.random().toString(36).slice(2, 8);
-      const autoSessionId = `eb-mm-${timestampPart}-${randomSuffix}`;
-      input.value = autoSessionId;
-    }
-  }
-
-  // Run this early AND reliably
-  assignAutoSessionId();
-
-
-
   const jsonPublicIdField = document.getElementById(
     "cloudinary-json-public-id"
   );
@@ -435,6 +413,17 @@ document.addEventListener("DOMContentLoaded", function () {
       isUploading = false;
       return;
     }
+    // Ensure we have a session id to link uploads, checkout, and the final game
+    let sessionId = "";
+    if (sessionInput) {
+      sessionId = (sessionInput.value || "").trim();
+      if (!sessionId) {
+        const timestampPart = Date.now().toString(36);
+        const randomSuffix = Math.random().toString(36).slice(2, 8);
+        sessionId = `eb-mm-${timestampPart}-${randomSuffix}`;
+        sessionInput.value = sessionId;
+      }
+    }
 
     const blocks = grid.querySelectorAll(".memory-block");
 
@@ -492,7 +481,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if (submitButton) submitButton.disabled = true;
 
     const memories = [];
-    const sessionId = sessionInput ? sessionInput.value.trim() : "";
 
     try {
       setStatus("Uploading memories… (0/" + ns.TOTAL_SLOTS + ")", "success");
