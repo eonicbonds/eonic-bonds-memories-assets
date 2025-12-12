@@ -32,6 +32,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const timestampPart = Date.now().toString(36);
       const randomSuffix = Math.random().toString(36).slice(2, 8);
       sessionId = `eb-mm-${timestampPart}-${randomSuffix}`;
+      console.log("DEBUG: generated sessionId =", sessionId);
       sessionInput.value = sessionId;
     }
   }
