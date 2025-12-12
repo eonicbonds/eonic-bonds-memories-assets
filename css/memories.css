@@ -41,34 +41,61 @@
   margin: 0 auto;
 }
 
-/* Session ID row */
+/* GIFT DETAILS SECTION */
 
-.memories-session-row {
-  display: flex;
-  justify-content: center;
-  margin-top: 18px;
+.memories-gift-section {
+  margin-top: 24px;
+  margin-bottom: 32px;
 }
 
-.memories-session-input {
-  max-width: 260px;
-  width: 100%;
+.memories-gift-heading {
+  font-family: Montserrat, sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--logo-purple);
+  margin-bottom: 4px;
 }
 
-.memories-session-input .w-input {
-  width: 100%;
-  border-radius: 999px;
-  border: 1px solid #c972d8;
-  background-color: #fdfdfb;
-  box-shadow: 0 10px 24px rgba(81, 66, 118, 0.16);
-  padding: 8px 14px;
+.memories-gift-subtitle {
   font-family: Quicksand, sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--dark-purple);
+  margin-bottom: 16px;
 }
 
-.memories-session-input .w-input::placeholder {
-  color: rgba(81, 66, 118, 0.5);
+.memories-gift-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
 }
+
+.memories-label {
+  display: block;
+  font-family: Quicksand, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dark-purple);
+  margin-bottom: 4px;
+}
+
+.memories-help-text {
+  font-family: Quicksand, sans-serif;
+  font-size: 11px;
+  color: rgba(81, 66, 118, 0.8);
+  margin-top: 4px;
+}
+
+.memories-win-message-field {
+  margin-top: 8px;
+}
+
+@media screen and (max-width: 767px) {
+  .memories-gift-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 
 /* CARD GRID */
 

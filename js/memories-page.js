@@ -13,6 +13,21 @@ document.addEventListener("DOMContentLoaded", function () {
   const progressBarEl = document.getElementById("memories-progress-bar");
   const sessionInput = document.getElementById("session-id");
 
+  // Gift details fields
+  const fromNameInput = document.getElementById("from-name");
+  const toNameInput = document.getElementById("to-name");
+  const emailInput = document.getElementById("player-email");
+  const winMessageInput = document.getElementById("win-message");
+
+  // Auto-generate a session id to link uploads, checkout, and the game
+  if (sessionInput && !sessionInput.value) {
+    const timestampPart = Date.now().toString(36);
+    const randomSuffix = Math.random().toString(36).slice(2, 8);
+    const autoSessionId = `eb-mm-${timestampPart}-${randomSuffix}`;
+    sessionInput.value = autoSessionId;
+  }
+
+
   const jsonPublicIdField = document.getElementById(
     "cloudinary-json-public-id"
   );
@@ -75,6 +90,16 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
 
+    // ✅ New: Validate gift fields
+    let allGiftFieldsValid = true;
+    const isFilled = (input) =>
+      input && input.value && input.value.trim().length > 0;
+
+    if (!isFilled(fromNameInput)) allGiftFieldsValid = false;
+    if (!isFilled(toNameInput)) allGiftFieldsValid = false;
+    if (!isFilled(emailInput)) allGiftFieldsValid = false;
+    if (!isFilled(winMessageInput)) allGiftFieldsValid = false;
+
     if (progressCountEl) {
       progressCountEl.textContent = String(completeCount);
     }
@@ -85,9 +110,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     if (submitButton) {
-      submitButton.disabled = completeCount !== ns.TOTAL_SLOTS;
+      const ready = completeCount === ns.TOTAL_SLOTS && allGiftFieldsValid;
+      submitButton.disabled = !ready;
     }
   }
+
 
   /**
    * Open Cropper modal for a given selected image File
@@ -424,6 +451,30 @@ document.addEventListener("DOMContentLoaded", function () {
       isUploading = false;
       return;
     }
+
+    // ✅ New: Guard for gift fields so we don't start uploads if they're empty
+    if (
+      fromNameInput &&
+      toNameInput &&
+      emailInput &&
+      winMessageInput
+    ) {
+      if (
+        !fromNameInput.value.trim() ||
+        !toNameInput.value.trim() ||
+        !emailInput.value.trim() ||
+        !winMessageInput.value.trim()
+      ) {
+        setStatus(
+          "Please fill in who the game is from, who it’s for, the email, and the win message before continuing.",
+          "error"
+        );
+        if (submitButton) submitButton.disabled = false;
+        isUploading = false;
+        return;
+      }
+    }
+
 
     if (submitButton) submitButton.disabled = true;
 
