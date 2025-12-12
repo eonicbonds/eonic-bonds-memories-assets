@@ -24,6 +24,18 @@ document.addEventListener("DOMContentLoaded", function () {
   );
   const jsonUrlField = document.getElementById("cloudinary-json-url");
 
+  // Ensure we have a game session id as soon as the page is ready
+  let sessionId = "";
+  if (sessionInput) {
+    sessionId = (sessionInput.value || "").trim();
+    if (!sessionId) {
+      const timestampPart = Date.now().toString(36);
+      const randomSuffix = Math.random().toString(36).slice(2, 8);
+      sessionId = `eb-mm-${timestampPart}-${randomSuffix}`;
+      sessionInput.value = sessionId;
+    }
+  }
+
   // Cropper globals
   const cropperModal = document.getElementById("memories-cropper-modal");
   const cropperImage = document.getElementById("cropper-image");
@@ -413,17 +425,9 @@ document.addEventListener("DOMContentLoaded", function () {
       isUploading = false;
       return;
     }
-    // Ensure we have a session id to link uploads, checkout, and the final game
-    let sessionId = "";
-    if (sessionInput) {
-      sessionId = (sessionInput.value || "").trim();
-      if (!sessionId) {
-        const timestampPart = Date.now().toString(36);
-        const randomSuffix = Math.random().toString(36).slice(2, 8);
-        sessionId = `eb-mm-${timestampPart}-${randomSuffix}`;
-        sessionInput.value = sessionId;
-      }
-    }
+    
+    // Use the session id we generated on page load
+    const sessionId = sessionInput ? (sessionInput.value || "").trim() : "";
 
     const blocks = grid.querySelectorAll(".memory-block");
 
