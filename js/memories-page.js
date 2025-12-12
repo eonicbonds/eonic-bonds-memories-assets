@@ -20,12 +20,25 @@ document.addEventListener("DOMContentLoaded", function () {
   const winMessageInput = document.getElementById("win-message");
 
   // Auto-generate a session id to link uploads, checkout, and the game
-  if (sessionInput && !sessionInput.value) {
-    const timestampPart = Date.now().toString(36);
-    const randomSuffix = Math.random().toString(36).slice(2, 8);
-    const autoSessionId = `eb-mm-${timestampPart}-${randomSuffix}`;
-    sessionInput.value = autoSessionId;
+  function assignAutoSessionId() {
+    const input = document.getElementById("session-id");
+    if (!input) {
+      // try again in 50ms until Webflow finishes injecting HTML
+      setTimeout(assignAutoSessionId, 50);
+      return;
+    }
+
+    if (!input.value) {
+      const timestampPart = Date.now().toString(36);
+      const randomSuffix = Math.random().toString(36).slice(2, 8);
+      const autoSessionId = `eb-mm-${timestampPart}-${randomSuffix}`;
+      input.value = autoSessionId;
+    }
   }
+
+  // Run this early AND reliably
+  assignAutoSessionId();
+
 
 
   const jsonPublicIdField = document.getElementById(
