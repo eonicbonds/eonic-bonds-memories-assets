@@ -11,7 +11,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const statusEl = document.getElementById("status-message");
   const progressCountEl = document.getElementById("memories-progress-count");
   const progressBarEl = document.getElementById("memories-progress-bar");
-  const sessionInput = document.getElementById("game-session-id");
 
   // Gift details fields
   const fromNameInput = document.getElementById("from-name");
@@ -25,16 +24,27 @@ document.addEventListener("DOMContentLoaded", function () {
   const jsonUrlField = document.getElementById("cloudinary-json-url");
 
   // Ensure we have a game session id as soon as the page is ready
+  console.log("DEBUG: DOMContentLoaded started");
+  const sessionInput = document.getElementById("game-session-id");
+  console.log("DEBUG: sessionInput element =", sessionInput);
   let sessionId = "";
   if (sessionInput) {
+    console.log("DEBUG: initial sessionInput.value =", sessionInput.value);
+
     sessionId = (sessionInput.value || "").trim();
     if (!sessionId) {
       const timestampPart = Date.now().toString(36);
       const randomSuffix = Math.random().toString(36).slice(2, 8);
       sessionId = `eb-mm-${timestampPart}-${randomSuffix}`;
+
       console.log("DEBUG: generated sessionId =", sessionId);
+
       sessionInput.value = sessionId;
+
+      console.log("DEBUG: sessionInput.value AFTER assigning =", sessionInput.value);
     }
+  } else {
+    console.log("DEBUG: sessionInput NOT FOUND in DOM");
   }
 
   // Cropper globals
