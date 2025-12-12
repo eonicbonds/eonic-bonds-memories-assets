@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const statusEl = document.getElementById("status-message");
   const progressCountEl = document.getElementById("memories-progress-count");
   const progressBarEl = document.getElementById("memories-progress-bar");
-  const sessionInput = document.getElementById("session-id");
+  const sessionInput = document.getElementById("game-session-id");
 
   // Gift details fields
   const fromNameInput = document.getElementById("from-name");
