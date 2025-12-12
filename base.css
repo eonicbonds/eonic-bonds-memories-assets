@@ -1,0 +1,41 @@
+:root {
+  --dark-blue: #0c4d6f;
+  --transparent: #0000;
+  --light-pink-transparent: #c972d8cc;
+  --cream: #fdfdfb;
+  --dark-purple: #514276;
+  --aqua: #a7eeed;
+  --pink: #c972d8;
+  --logo-purple: #6c45a3;
+  --medium-purple: #ab8ad0;
+  --aqua-transparent: color-mix(in hsl, transparent 20%, var(--aqua) 80%);
+  --medium-purple-transparent: color-mix(
+    in hsl,
+    transparent 60%,
+    var(--medium-purple) 40%
+  );
+  --white: white;
+  --light-purple: #f4f2ff;
+}
+
+/* Page background + base typography */
+body {
+  color: #333;
+  background-color: var(--transparent);
+  background-image: linear-gradient(
+    345deg,
+    var(--pink) 9%,
+    #c9dfde 48%,
+    var(--cream) 84%,
+    var(--cream) 103%
+  );
+  background-size: cover;
+  background-attachment: fixed;
+  font-family: Montserrat, sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.hidden {
+  display: none !important;
+}
