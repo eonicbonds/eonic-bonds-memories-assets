@@ -659,10 +659,19 @@ document.addEventListener("DOMContentLoaded", function () {
         const descInput = block.querySelector(".memory-description-input");
 
         const file = fileInput.files[0]; // this is the cropped File (because you replace fileInput.files)
-        const uploaded = await ns.uploadToCloudinary(file, {
-          folder: ns.CLOUDINARY_FOLDER,
-          uploadPreset: ns.CLOUDINARY_UPLOAD_PRESET,
-        });
+        let uploaded;
+        try {
+          uploaded = await ns.uploadToCloudinary({
+            file,
+            resourceType: "image",
+            folder: ns.CLOUDINARY_FOLDER,
+            uploadPreset: ns.CLOUDINARY_UPLOAD_PRESET,
+          });
+        } catch (err) {
+          throw new Error(`Failed to upload image for Memory ${i + 1}`);
+        }
+
+
 
         memories.push({
           slot: i + 1,
@@ -695,9 +704,10 @@ document.addEventListener("DOMContentLoaded", function () {
         memories,
       };
 
-      const jsonUploaded = await ns.uploadJsonToCloudinary(jsonPayload, {
+      const jsonUploaded = await ns.uploadJsonToCloudinary({
+        payload: jsonPayload,
         folder: ns.CLOUDINARY_JSON_FOLDER,
-        uploadPreset: ns.CLOUDINARY_UPLOAD_PRESET,
+        filename: `${sessionId || "eb-mm"}.json`,
       });
 
       const jsonPublicIdInput = document.getElementById("cloudinary-json-public-id");
