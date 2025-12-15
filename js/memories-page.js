@@ -200,73 +200,341 @@ document.addEventListener("DOMContentLoaded", function () {
     if (type) statusEl.classList.add(type);
   }
 
+
+// -----------------------------
+// Validation UI (blur + submit)
+// -----------------------------
+function getFieldWrap(el) {
+  return el ? el.closest(".memories-field") : null;
+}
+
+function ensureErrorEl(fieldWrap) {
+  if (!fieldWrap) return null;
+  let err = fieldWrap.querySelector(".memories-error");
+  if (!err) {
+    err = document.createElement("div");
+    err.className = "memories-error";
+    err.setAttribute("role", "alert");
+    // Minimal inline styling so it's visible even if CSS hasn't been updated yet.
+    err.style.marginTop = "6px";
+    err.style.fontSize = "12px";
+    err.style.lineHeight = "1.3";
+    err.style.color = "#d33";
+    fieldWrap.appendChild(err);
+  }
+  return err;
+}
+
+function setFieldError(el, message) {
+  const wrap = getFieldWrap(el);
+  if (!wrap) return;
+
+  wrap.classList.add("is-invalid");
+
+  // Minimal inline styling so it's visible immediately
+  if (el && el.style) {
+    el.style.borderColor = "#d33";
+    el.style.boxShadow = "0 0 0 2px rgba(211, 51, 51, 0.15)";
+  }
+
+  const err = ensureErrorEl(wrap);
+  if (err) err.textContent = message || "Please check this field.";
+}
+
+function clearFieldError(el) {
+  const wrap = getFieldWrap(el);
+  if (!wrap) return;
+
+  wrap.classList.remove("is-invalid");
+
+  if (el && el.style) {
+    el.style.borderColor = "";
+    el.style.boxShadow = "";
+  }
+
+  const err = wrap.querySelector(".memories-error");
+  if (err) err.textContent = "";
+}
+
+function isVisibleAndEnabled(el) {
+  if (!el) return false;
+  if (el.disabled) return false;
+
+  const wrap = getFieldWrap(el) || el;
+
+  if (wrap.hidden) return false;
+  // If hidden via CSS (display:none), offsetParent will be null (except fixed).
+  if (wrap.offsetParent === null && getComputedStyle(wrap).position !== "fixed") return false;
+
+  return true;
+}
+
+function validateRequired(el, label) {
+  if (!isVisibleAndEnabled(el)) {
+    // If not visible, clear errors to avoid stale red states.
+    clearFieldError(el);
+    return true;
+  }
+
+  const requiredNow = el.hasAttribute("required");
+  const val = (el.value || "").trim();
+
+  if (requiredNow && !val) {
+    setFieldError(el, `${label || "This field"} is required.`);
+    return false;
+  }
+
+  // valid required state
+  clearFieldError(el);
+  return true;
+}
+
+function validateEmailDistinctIfNeeded() {
+  const toggle = document.getElementById("send-direct-toggle");
+  const from = document.getElementById("from-email");
+  const to = document.getElementById("to-email");
+
+  // Toggle off: recipient email not required, clear recipient error
+  if (!(toggle && toggle.checked)) {
+    if (to) clearFieldError(to);
+    // Don't clear from-email required errors here.
+    return true;
+  }
+
+  // Toggle on: recipient email required
+  if (to) to.setAttribute("required", "required");
+
+  const fromVal = (from?.value || "").trim().toLowerCase();
+  const toVal = (to?.value || "").trim().toLowerCase();
+
+  let ok = true;
+
+  if (to && !toVal) {
+    setFieldError(to, "Recipient email is required when send-direct is checked.");
+    ok = false;
+  }
+
+  if (fromVal && toVal && fromVal === toVal) {
+    if (from) setFieldError(from, "Sender and recipient emails must be different.");
+    if (to) setFieldError(to, "Sender and recipient emails must be different.");
+    ok = false;
+  }
+
+  if (ok) {
+    // Only clear the “distinct” errors; required errors are handled by validateRequired()
+    if (fromVal) clearFieldError(from);
+    if (toVal) clearFieldError(to);
+  }
+
+  return ok;
+}
+
+function validateMemoriesBlocks(showPerFieldErrors = true) {
+  const blocks = grid.querySelectorAll(".memory-block");
+  let ok = true;
+
+  blocks.forEach((block, idx) => {
+    const slot = idx + 1;
+
+    const fileInput = block.querySelector(".memory-image-input");
+    const titleInput = block.querySelector(".memory-title-input");
+    const dateInput = block.querySelector(".memory-date-input");
+    const descInput = block.querySelector(".memory-description-input");
+
+    const file = fileInput && fileInput.files && fileInput.files[0];
+
+    if (!file) {
+      if (showPerFieldErrors) setFieldError(fileInput, `Please add an image for Memory ${slot}.`);
+      ok = false;
+    } else {
+      if (showPerFieldErrors) clearFieldError(fileInput);
+    }
+
+    // These don't have native required attributes, so treat them as required by rule
+    const titleVal = (titleInput?.value || "").trim();
+    const dateVal = (dateInput?.value || "").trim();
+    const descVal = (descInput?.value || "").trim();
+
+    if (!titleVal) {
+      if (showPerFieldErrors) setFieldError(titleInput, `Title (Memory ${slot}) is required.`);
+      ok = false;
+    } else if (showPerFieldErrors) {
+      clearFieldError(titleInput);
+    }
+
+    if (!dateVal) {
+      if (showPerFieldErrors) setFieldError(dateInput, `Month/Year (Memory ${slot}) is required.`);
+      ok = false;
+    } else if (showPerFieldErrors) {
+      clearFieldError(dateInput);
+    }
+
+    if (!descVal) {
+      if (showPerFieldErrors) setFieldError(descInput, `Description (Memory ${slot}) is required.`);
+      ok = false;
+    } else if (showPerFieldErrors) {
+      clearFieldError(descInput);
+    }
+  });
+
+  return ok;
+}
+
+function focusFirstInvalid() {
+  // Prefer focusing the first invalid input/textarea/select in DOM order
+  const firstInvalidControl = form.querySelector(
+    ".memories-field.is-invalid input, .memories-field.is-invalid textarea, .memories-field.is-invalid select"
+  );
+  const firstInvalidWrap = form.querySelector(".memories-field.is-invalid");
+
+  const target = firstInvalidControl || firstInvalidWrap;
+  if (!target) return;
+
+  // Scroll into view first (smooth), then focus without jumping
+  try {
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+  } catch (_) {}
+
+  if (typeof target.focus === "function") {
+    try {
+      target.focus({ preventScroll: true });
+    } catch (_) {
+      target.focus();
+    }
+  } else {
+    const focusable = target.querySelector("input,textarea,select,button");
+    focusable && focusable.focus && focusable.focus();
+  }
+}
+
+function validateAllAndMark() {
+  let ok = true;
+
+  ok = validateRequired(fromNameInput, "From") && ok;
+  ok = validateRequired(toNameInput, "To") && ok;
+  ok = validateRequired(fromEmailInput, "Email for checkout & game link") && ok;
+
+  // Toggle-specific rules
+  ok = validateEmailDistinctIfNeeded() && ok;
+
+  // Memories required by product rules
+  ok = validateMemoriesBlocks(true) && ok;
+
+  return ok;
+}
+
+function setupBlurValidation() {
+  // Gift fields
+  fromNameInput && fromNameInput.addEventListener("blur", () => validateRequired(fromNameInput, "From"));
+  toNameInput && toNameInput.addEventListener("blur", () => validateRequired(toNameInput, "To"));
+  fromEmailInput && fromEmailInput.addEventListener("blur", () => {
+    validateRequired(fromEmailInput, "Email for checkout & game link");
+    validateEmailDistinctIfNeeded();
+  });
+
+  // Recipient email field may be hidden/disabled; validate only when relevant
+  document.addEventListener(
+    "blur",
+    (e) => {
+      if (!e.target || e.target.id !== "to-email") return;
+      validateEmailDistinctIfNeeded();
+    },
+    true
+  );
+
+  // Toggle: re-check distinct rule when switched
+  document.addEventListener("input", (e) => {
+    if (e.target && e.target.id === "send-direct-toggle") {
+      // Clear/show errors based on new state
+      validateEmailDistinctIfNeeded();
+    }
+  });
+
+  // Memory fields: validate on blur/change (delegated)
+  grid.addEventListener(
+    "blur",
+    (e) => {
+      const t = e.target;
+      if (!t) return;
+
+      if (t.classList.contains("memory-title-input")) {
+        if ((t.value || "").trim()) clearFieldError(t);
+        else setFieldError(t, "Title is required.");
+      } else if (t.classList.contains("memory-date-input")) {
+        if ((t.value || "").trim()) clearFieldError(t);
+        else setFieldError(t, "Month/Year is required.");
+      } else if (t.classList.contains("memory-description-input")) {
+        if ((t.value || "").trim()) clearFieldError(t);
+        else setFieldError(t, "Description is required.");
+      }
+    },
+    true
+  );
+
+  grid.addEventListener(
+    "change",
+    (e) => {
+      const t = e.target;
+      if (!t) return;
+
+      if (t.classList.contains("memory-image-input")) {
+        const hasFile = t.files && t.files[0];
+        if (hasFile) clearFieldError(t);
+        else setFieldError(t, "Please add an image.");
+      }
+    },
+    true
+  );
+}
+
   /**
    * Recompute how many tiles are complete and update progress UI
    */
-  function updateFormState() {
-    const blocks = grid.querySelectorAll(".memory-block");
-    let completeCount = 0;
+  
+/**
+ * Recompute how many tiles are complete and update progress UI
+ * (No button disabling — validation UI is handled on blur + submit.)
+ */
+function updateFormState() {
+  const blocks = grid.querySelectorAll(".memory-block");
+  let completeCount = 0;
 
-    blocks.forEach((block) => {
-      const fileInput = block.querySelector(".memory-image-input");
-      const titleInput = block.querySelector(".memory-title-input");
-      const dateInput = block.querySelector(".memory-date-input");
-      const descInput = block.querySelector(".memory-description-input");
+  blocks.forEach((block) => {
+    const fileInput = block.querySelector(".memory-image-input");
+    const titleInput = block.querySelector(".memory-title-input");
+    const dateInput = block.querySelector(".memory-date-input");
+    const descInput = block.querySelector(".memory-description-input");
 
-      const file = fileInput && fileInput.files[0];
-      const title = titleInput && titleInput.value.trim();
-      const date = dateInput && dateInput.value.trim();
-      const desc = descInput && descInput.value.trim();
+    const file = fileInput && fileInput.files && fileInput.files[0];
+    const title = titleInput && titleInput.value.trim();
+    const date = dateInput && dateInput.value.trim();
+    const desc = descInput && descInput.value.trim();
 
-      const cardComplete = !!file && !!title && !!date && !!desc;
+    const cardComplete = !!file && !!title && !!date && !!desc;
 
-      if (cardComplete) {
-        completeCount++;
-        block.classList.add("is-complete");
-      } else {
-        block.classList.remove("is-complete");
-      }
-    });
-
-    // ✅ New: Validate gift fields
-    let allGiftFieldsValid = true;
-    const isFilled = (input) =>
-      input && input.value && input.value.trim().length > 0;
-
-    if (!isFilled(fromNameInput)) allGiftFieldsValid = false;
-    if (!isFilled(toNameInput)) allGiftFieldsValid = false;
-    if (!isFilled(fromEmailInput)) allGiftFieldsValid = false;
-
-    const toggle = document.getElementById("send-direct-toggle");
-    const fromEmail = document.getElementById("from-email");
-    const toEmail = document.getElementById("to-email");
-
-    if (toggle && toggle.checked) {
-      if (!isFilled(toEmail)) allGiftFieldsValid = false;
-
-      const fromVal = (fromEmail?.value || "").trim().toLowerCase();
-      const toVal = (toEmail?.value || "").trim().toLowerCase();
-
-      if (fromVal && toVal && fromVal === toVal) {
-        allGiftFieldsValid = false;
-      }
+    if (cardComplete) {
+      completeCount++;
+      block.classList.add("is-complete");
+    } else {
+      block.classList.remove("is-complete");
     }
+  });
 
-
-    if (progressCountEl) {
-      progressCountEl.textContent = String(completeCount);
-    }
-
-    if (progressBarEl) {
-      const pct = (completeCount / ns.TOTAL_SLOTS) * 100;
-      progressBarEl.style.width = pct + "%";
-    }
-
-    if (submitButton) {
-      const ready = completeCount === ns.TOTAL_SLOTS && allGiftFieldsValid;
-      submitButton.disabled = !ready;
-    }
+  if (progressCountEl) {
+    progressCountEl.textContent = String(completeCount);
   }
+
+  if (progressBarEl) {
+    const pct = (completeCount / ns.TOTAL_SLOTS) * 100;
+    progressBarEl.style.width = pct + "%";
+  }
+
+  // Never disable the button for “incomplete”.
+  // We only prevent submission inside handleMemoriesSubmit when invalid.
+  if (submitButton) {
+    submitButton.disabled = false;
+  }
+}
 
 
   /**
@@ -550,190 +818,154 @@ document.addEventListener("DOMContentLoaded", function () {
     attachBlockListeners(block);
   }
 
-  // Initial state
-  if (submitButton) submitButton.disabled = true;
-  updateFormState();
-  setStatus(
-    "Add 8 memories with images, titles, months, and descriptions.",
-    "success"
-  );
+  
+// Initial state
+if (submitButton) submitButton.disabled = false; // ✅ never disabled for incomplete fields
+setupBlurValidation();
+updateFormState();
+setStatus(
+  "Add 8 memories with images, titles, months, and descriptions.",
+  "success"
+);
 
   /**
    * Submit handler (capture phase so we run before Webflow's own handler):
    * - First submit: intercept, upload to Cloudinary, then trigger a second submit
    * - Second submit: let Webflow handle it normally
    */
-  async function handleMemoriesSubmit(e) {
-    // Second pass (after uploads) → let Webflow handle it normally
-    if (hasUploadedForThisSubmit) {
-      hasUploadedForThisSubmit = false; // reset for next time
-      return; // do NOT preventDefault here
+  
+async function handleMemoriesSubmit(e) {
+  // Second pass (after uploads) → let Webflow handle it normally
+  if (hasUploadedForThisSubmit) {
+    hasUploadedForThisSubmit = false; // reset for next time
+    return; // do NOT preventDefault here
+  }
+
+  // Always intercept the first pass
+  e.preventDefault();
+  e.stopImmediatePropagation(); // ✅ prevents Webflow from submitting right now
+
+  // If an upload is already running, don't start another.
+  if (isUploading) {
+    setStatus("Uploading in progress… please wait.", "success");
+    return;
+  }
+
+  // Validate and mark UI errors
+  const ok = validateAllAndMark();
+  if (!ok) {
+    setStatus("Please fix the highlighted fields and try again.", "error");
+    focusFirstInvalid();
+    return;
+  }
+
+  isUploading = true;
+
+  try {
+    setStatus("");
+
+    const liveToggle = document.getElementById("send-direct-toggle");
+    const sendDirectOn = !!(liveToggle && liveToggle.checked);
+
+    const liveFromEmail = document.getElementById("from-email");
+    const liveToEmail = document.getElementById("to-email");
+
+    // --- Collect memories from DOM ---
+    const blocks = grid.querySelectorAll(".memory-block");
+    if (!blocks || blocks.length !== ns.TOTAL_SLOTS) {
+      setStatus("Memories grid is not ready. Please refresh and try again.", "error");
+      return;
     }
 
-    // First pass: intercept and run the Cloudinary pipeline
-    e.preventDefault();
-    e.stopImmediatePropagation(); // ✅ critical: prevents Webflow from submitting right now
+    // --- Upload images ---
+    const sessionIdLocal = (sessionInput?.value || "").trim();
+    const memories = [];
 
-    if (isUploading) return;
-    isUploading = true;
+    setStatus(`Uploading memories… (0/${ns.TOTAL_SLOTS})`, "success");
 
-    try {
-      if (submitButton) submitButton.disabled = true;
-      setStatus("");
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i];
+      const fileInput = block.querySelector(".memory-image-input");
+      const titleInput = block.querySelector(".memory-title-input");
+      const dateInput = block.querySelector(".memory-date-input");
+      const descInput = block.querySelector(".memory-description-input");
 
-      // --- Gift validation ---
-      const liveToggle = document.getElementById("send-direct-toggle");
-      const sendDirectOn = !!(liveToggle && liveToggle.checked);
+      const file = fileInput.files[0];
 
-      const liveFromEmail = document.getElementById("from-email");
-      const liveToEmail = document.getElementById("to-email");
-
-      if (!fromNameInput?.value.trim() || !toNameInput?.value.trim() || !liveFromEmail?.value.trim()) {
-        setStatus(
-          "Please fill in who the game is from, who it’s for, and the email before continuing.",
-          "error"
-        );
-        return;
-      }
-
-      if (sendDirectOn) {
-        if (!liveToEmail?.value.trim()) {
-          setStatus(
-            "Please enter your recipient’s email (or turn off the send-direct option) before continuing.",
-            "error"
-          );
-          return;
-        }
-
-        const fromVal = (liveFromEmail.value || "").trim().toLowerCase();
-        const toVal = (liveToEmail.value || "").trim().toLowerCase();
-        if (fromVal && toVal && fromVal === toVal) {
-          setStatus(
-            "Sender email and recipient email must be different. Please use two different email addresses (or turn off the send-direct option).",
-            "error"
-          );
-          return;
-        }
-      }
-
-      // --- Collect + validate memories from DOM (no memoryData) ---
-      const blocks = grid.querySelectorAll(".memory-block");
-      if (!blocks || blocks.length !== ns.TOTAL_SLOTS) {
-        setStatus("Memories grid is not ready. Please refresh and try again.", "error");
-        return;
-      }
-
-      // Ensure all 8 are complete before uploading
-      for (let i = 0; i < blocks.length; i++) {
-        const block = blocks[i];
-        const fileInput = block.querySelector(".memory-image-input");
-        const titleInput = block.querySelector(".memory-title-input");
-        const dateInput = block.querySelector(".memory-date-input");
-        const descInput = block.querySelector(".memory-description-input");
-
-        const file = fileInput && fileInput.files && fileInput.files[0];
-        const title = (titleInput?.value || "").trim();
-        const date = (dateInput?.value || "").trim();
-        const desc = (descInput?.value || "").trim();
-
-        if (!file || !title || !date || !desc) {
-          setStatus(
-            "Please complete all 8 memories with image, title, month/year, and description.",
-            "error"
-          );
-          return;
-        }
-      }
-
-      // --- Upload images ---
-      const sessionId = (sessionInput?.value || "").trim();
-      const memories = [];
-
-      setStatus(`Uploading memories… (0/${ns.TOTAL_SLOTS})`, "success");
-
-      for (let i = 0; i < blocks.length; i++) {
-        const block = blocks[i];
-        const fileInput = block.querySelector(".memory-image-input");
-        const titleInput = block.querySelector(".memory-title-input");
-        const dateInput = block.querySelector(".memory-date-input");
-        const descInput = block.querySelector(".memory-description-input");
-
-        const file = fileInput.files[0]; // this is the cropped File (because you replace fileInput.files)
-        let uploaded;
-        try {
-          uploaded = await ns.uploadToCloudinary({
-            file,
-            resourceType: "image",
-            folder: ns.CLOUDINARY_FOLDER,
-            uploadPreset: ns.CLOUDINARY_UPLOAD_PRESET,
-          });
-        } catch (err) {
-          throw new Error(`Failed to upload image for Memory ${i + 1}`);
-        }
-
-
-
-        memories.push({
-          slot: i + 1,
-          title: (titleInput.value || "").trim(),
-          date: (dateInput.value || "").trim(),
-          description: (descInput.value || "").trim(),
-          secure_url: uploaded.secure_url,
-          public_id: uploaded.public_id,
-          width: uploaded.width,
-          height: uploaded.height,
-          bytes: uploaded.bytes,
-          format: uploaded.format,
+      let uploaded;
+      try {
+        uploaded = await ns.uploadToCloudinary({
+          file,
+          resourceType: "image",
+          folder: ns.CLOUDINARY_FOLDER,
+          uploadPreset: ns.CLOUDINARY_UPLOAD_PRESET,
         });
-
-        setStatus(`Uploading memories… (${i + 1}/${ns.TOTAL_SLOTS})`, "success");
+      } catch (err) {
+        throw new Error(`Failed to upload image for Memory ${i + 1}`);
       }
 
-      // --- Build + upload JSON ---
-      const customMessageValue = (document.getElementById("custom-message")?.value || "").trim();
-
-      const jsonPayload = {
-        sessionId: sessionId || null,
-        totalMemories: ns.TOTAL_SLOTS,
-        fromName: (fromNameInput?.value || "").trim(),
-        toName: (toNameInput?.value || "").trim(),
-        fromEmail: (liveFromEmail?.value || "").trim(),
-        sendDirect: sendDirectOn,
-        toEmail: (liveToEmail?.value || "").trim(),
-        customMessage: customMessageValue,
-        memories,
-      };
-
-      const jsonUploaded = await ns.uploadJsonToCloudinary({
-        payload: jsonPayload,
-        folder: ns.CLOUDINARY_JSON_FOLDER,
-        filename: `${sessionId || "eb-mm"}.json`,
+      memories.push({
+        slot: i + 1,
+        title: (titleInput.value || "").trim(),
+        date: (dateInput.value || "").trim(),
+        description: (descInput.value || "").trim(),
+        secure_url: uploaded.secure_url,
+        public_id: uploaded.public_id,
+        width: uploaded.width,
+        height: uploaded.height,
+        bytes: uploaded.bytes,
+        format: uploaded.format,
       });
 
-      const jsonPublicIdInput = document.getElementById("cloudinary-json-public-id");
-      const jsonUrlInput = document.getElementById("cloudinary-json-url");
-
-      if (jsonPublicIdInput && jsonUploaded.public_id) {
-        const filenameOnly = String(jsonUploaded.public_id)
-          .split("/")
-          .pop()
-          .replace(/\.[^.]+$/, "");
-        jsonPublicIdInput.value = filenameOnly;
-      }
-
-      if (jsonUrlInput) jsonUrlInput.value = jsonUploaded.secure_url || "";
-
-      // --- Trigger Webflow submit as a second pass ---
-      hasUploadedForThisSubmit = true;
-      form.requestSubmit();
-    } catch (err) {
-      console.error(err);
-      setStatus("Something went wrong while uploading your memories.", "error");
-      if (submitButton) submitButton.disabled = false;
-    } finally {
-      isUploading = false;
+      setStatus(`Uploading memories… (${i + 1}/${ns.TOTAL_SLOTS})`, "success");
     }
+
+    // --- Build + upload JSON ---
+    const customMessageValue = (document.getElementById("custom-message")?.value || "").trim();
+
+    const jsonPayload = {
+      sessionId: sessionIdLocal || null,
+      totalMemories: ns.TOTAL_SLOTS,
+      fromName: (fromNameInput?.value || "").trim(),
+      toName: (toNameInput?.value || "").trim(),
+      fromEmail: (liveFromEmail?.value || "").trim(),
+      sendDirect: sendDirectOn,
+      toEmail: (liveToEmail?.value || "").trim(),
+      customMessage: customMessageValue,
+      memories,
+    };
+
+    const jsonUploaded = await ns.uploadJsonToCloudinary({
+      payload: jsonPayload,
+      folder: ns.CLOUDINARY_JSON_FOLDER,
+      filename: `${sessionIdLocal || "eb-mm"}.json`,
+    });
+
+    const jsonPublicIdInput = document.getElementById("cloudinary-json-public-id");
+    const jsonUrlInput = document.getElementById("cloudinary-json-url");
+
+    if (jsonPublicIdInput && jsonUploaded.public_id) {
+      const filenameOnly = String(jsonUploaded.public_id)
+        .split("/")
+        .pop()
+        .replace(/\.[^.]+$/, "");
+      jsonPublicIdInput.value = filenameOnly;
+    }
+
+    if (jsonUrlInput) jsonUrlInput.value = jsonUploaded.secure_url || "";
+
+    // --- Trigger Webflow submit as a second pass ---
+    hasUploadedForThisSubmit = true;
+    form.requestSubmit();
+  } catch (err) {
+    console.error(err);
+    setStatus("Something went wrong while uploading your memories.", "error");
+  } finally {
+    isUploading = false;
   }
+}
+
+
 
 
   // NOTE: capture = true so we run before Webflow's own submit handler
