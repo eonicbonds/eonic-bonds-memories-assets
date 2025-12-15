@@ -16,7 +16,32 @@ document.addEventListener("DOMContentLoaded", function () {
   const fromNameInput = document.getElementById("from-name");
   const toNameInput = document.getElementById("to-name");
   const emailInput = document.getElementById("player-email");
-  const winMessageInput = document.getElementById("custom-message");
+  const customMessageInput = document.getElementById("custom-message");
+  const customMessageCounter = document.querySelector(
+    '.memories-char-counter[data-for="custom-message"]'
+  );
+
+  // Custom message: char counter (optional field)
+  if (customMessageInput && customMessageCounter) {
+    // initialize counter on page load
+    ns.updateCharCounter(customMessageInput, customMessageCounter, 300);
+
+    // update counter as user types
+    customMessageInput.addEventListener("input", () => {
+      ns.updateCharCounter(customMessageInput, customMessageCounter, 300);
+      updateFormState();
+    });
+  }
+
+  // Gift fields: keep submit button state in sync as user types
+  [fromNameInput, toNameInput, emailInput].forEach((el) => {
+    if (!el) return;
+    el.addEventListener("input", () => {
+      updateFormState();
+    });
+  });
+
+
 
   const jsonPublicIdField = document.getElementById(
     "cloudinary-json-public-id"
@@ -430,7 +455,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     // Use the session id we generated on page load
-    const sessionId = sessionInput ? (sessionInput.value || "").trim() : "";
+    sessionId = sessionInput ? (sessionInput.value || "").trim() : "";
 
     const blocks = grid.querySelectorAll(".memory-block");
 
@@ -473,7 +498,7 @@ document.addEventListener("DOMContentLoaded", function () {
         !emailInput.value.trim()
       ) {
         setStatus(
-          "Please fill in who the game is from, who it’s for, the email, and the win message before continuing.",
+          "Please fill in who the game is from, who it’s for, and the email before continuing.",
           "error"
         );
         if (submitButton) submitButton.disabled = false;
