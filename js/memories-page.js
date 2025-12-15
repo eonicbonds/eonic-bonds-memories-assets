@@ -32,10 +32,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const on = toggle.checked;
 
-      // Show / hide via class (CSS handles layout)
-      field.classList.toggle("is-visible", on);
-
-      // Toggle required state
+      field.hidden = !on;
+      input.disabled = !on;
       input.required = on;
 
       // Optional: clear value when turning off
