@@ -700,7 +700,19 @@ document.addEventListener("DOMContentLoaded", function () {
       const jsonPublicIdInput = document.getElementById("cloudinary-json-public-id");
       const jsonUrlInput = document.getElementById("cloudinary-json-url");
 
-      if (jsonPublicIdInput) jsonPublicIdInput.value = jsonUploaded.public_id || "";
+      if (jsonPublicIdInput && jsonUploaded.public_id) {
+        const fullId = jsonUploaded.public_id;
+
+        // Strip folders and extension:
+        // "our-matching-memories/json/abc123.json" → "abc123"
+        const filenameOnly = fullId
+          .split("/")                // take last path segment
+          .pop()
+          .replace(/\.[^.]+$/, "");  // remove extension
+
+        jsonPublicIdInput.value = filenameOnly;
+      }
+
       if (jsonUrlInput) jsonUrlInput.value = jsonUploaded.secure_url || "";
 
       // Mark that uploads are done for THIS submit click
