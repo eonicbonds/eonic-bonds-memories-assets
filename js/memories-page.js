@@ -349,8 +349,19 @@ document.addEventListener("DOMContentLoaded", function () {
       activeFileInput.files = dt.files;
 
       ns.updatePreview(activeBlock, dataUrl);
-      updateFormState();
+
+      // Close first so UI never gets stuck if validation throws
       closeCropper();
+
+      // Then update state (next tick so it runs after the modal DOM changes)
+      setTimeout(() => {
+        try {
+          updateFormState();
+        } catch (err) {
+          console.error("updateFormState failed after crop apply:", err);
+        }
+      }, 0);
+
     });
   }
 
