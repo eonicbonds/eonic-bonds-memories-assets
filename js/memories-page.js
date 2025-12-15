@@ -727,32 +727,66 @@ document.addEventListener("DOMContentLoaded", function () {
   // NOTE: capture = true so we run before Webflow's own submit handler
   form.addEventListener("submit", handleMemoriesSubmit, true);
 
-  // Terms / Privacy modals — Webflow-export safe (bypass IX2)
+  // Terms / Privacy modals — Webflow IX2-safe (force visible styles)
   (function setupPolicyModals() {
+    function forceVisible(el) {
+      if (!el) return;
+      el.style.setProperty("display", "flex", "important");
+      el.style.setProperty("opacity", "1", "important");
+      el.style.setProperty("visibility", "visible", "important");
+      el.style.setProperty("transform", "none", "important");
+      el.style.setProperty("pointer-events", "auto", "important");
+    }
+
+    function forceHidden(el) {
+      if (!el) return;
+      el.style.setProperty("display", "none", "important");
+      el.style.setProperty("pointer-events", "none", "important");
+      el.setAttribute("aria-hidden", "true");
+    }
+
     function openModalById(id) {
       const modal = document.getElementById(id);
       if (!modal) return;
-      modal.style.display = "flex"; // modal-wrapper-2 expects flex
+
+      // Show the wrapper
+      modal.removeAttribute("hidden");
       modal.setAttribute("aria-hidden", "false");
+      forceVisible(modal);
+
+      // Also force the inner content visible (Webflow IX2 often hides it too)
+      const content = modal.querySelector(".div-block-47");
+      if (content) {
+        content.style.setProperty("opacity", "1", "important");
+        content.style.setProperty("visibility", "visible", "important");
+        content.style.setProperty("transform", "none", "important");
+        content.style.setProperty("pointer-events", "auto", "important");
+      }
+
+      // And the backdrop
+      const backdrop = modal.querySelector(".div-block-38");
+      if (backdrop) {
+        backdrop.style.setProperty("opacity", "0.7", "important");
+        backdrop.style.setProperty("visibility", "visible", "important");
+        backdrop.style.setProperty("pointer-events", "auto", "important");
+      }
     }
 
     function closeModal(modal) {
       if (!modal) return;
-      modal.style.display = "none";
-      modal.setAttribute("aria-hidden", "true");
+      forceHidden(modal);
     }
 
-    // Open from consent links
+    // Open from consent links: <a data-open-modal="terms-modal">...</a>
     document.addEventListener("click", (e) => {
       const link = e.target.closest("[data-open-modal]");
       if (!link) return;
 
       e.preventDefault();
-      const modalId = link.getAttribute("data-open-modal");
-      openModalById(modalId);
+      openModalById(link.getAttribute("data-open-modal"));
     });
 
-    // Close on backdrop or close button
+    // Close on backdrop or close button inside the modal
     document.addEventListener("click", (e) => {
       const modal = e.target.closest(".modal-wrapper-2");
       if (!modal) return;
@@ -766,12 +800,10 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
 
-    // ESC closes any open policy modal
+    // ESC closes open modals
     document.addEventListener("keydown", (e) => {
       if (e.key !== "Escape") return;
-      document.querySelectorAll(".modal-wrapper-2").forEach((m) => {
-        if (getComputedStyle(m).display !== "none") closeModal(m);
-      });
+      document.querySelectorAll(".modal-wrapper-2").forEach((m) => closeModal(m));
     });
   })();
 
