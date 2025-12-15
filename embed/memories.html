@@ -24,14 +24,22 @@
                         <div class="memories-field">
                             <label for="from-name" class="memories-label">From</label>
                             <input id="from-name" name="from_name" type="text" class="memories-input"
-                                placeholder="Your name" required />
+                                placeholder="Your name" maxlength="20" required />
+                            <div class="memories-field-footer">
+                                <span class="memories-char-counter" data-for="from-name">0/20</span>
+                            </div>
                         </div>
+
 
                         <div class="memories-field">
                             <label for="to-name" class="memories-label">To</label>
                             <input id="to-name" name="to_name" type="text" class="memories-input"
-                                placeholder="Their name" required />
+                                placeholder="Their name" maxlength="20" required />
+                            <div class="memories-field-footer">
+                                <span class="memories-char-counter" data-for="to-name">0/20</span>
+                            </div>
                         </div>
+
 
                         <div class="memories-field">
                             <label for="player-email" class="memories-label">Email for checkout & game link</label>

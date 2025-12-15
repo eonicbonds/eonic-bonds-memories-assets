@@ -60,7 +60,54 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 
+  // From/To name: char counters (delegated, Webflow-proof)
+  (function setupNameCounters() {
+    const MAX = 20;
 
+    const render = (id) => {
+      const input = document.getElementById(id);
+      const counter = document.querySelector(`.memories-char-counter[data-for="${id}"]`);
+      if (!input || !counter) return;
+      counter.textContent = `${(input.value || "").length}/${MAX}`;
+    };
+
+    // Initialize on load (handles autofill / back-button cache)
+    render("from-name");
+    render("to-name");
+
+    // Update as the user types (delegated)
+    document.addEventListener("input", (e) => {
+      if (!e.target || !e.target.id) return;
+
+      if (e.target.id === "from-name" || e.target.id === "to-name") {
+        render(e.target.id);
+        updateFormState();
+      }
+    });
+
+    // Safety for autofill/change events
+    document.addEventListener("change", (e) => {
+      if (!e.target || !e.target.id) return;
+
+      if (e.target.id === "from-name" || e.target.id === "to-name") {
+        render(e.target.id);
+        updateFormState();
+      }
+    });
+  })();
+
+  // Auto-trim From/To names on blur (optional UX polish)
+  document.addEventListener(
+    "blur",
+    (e) => {
+      if (!e.target || !e.target.id) return;
+
+      if (e.target.id === "from-name" || e.target.id === "to-name") {
+        e.target.value = (e.target.value || "").trim();
+      }
+    },
+    true // capture phase so it always fires
+  );
 
 
   // Custom message: char counter (optional field) — resilient to Webflow DOM replacement
