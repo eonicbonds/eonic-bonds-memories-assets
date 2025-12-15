@@ -262,6 +262,24 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  // Consent links → open header modals (delegated)
+  document.addEventListener("click", (e) => {
+    const trigger = e.target.closest("[data-open-modal]");
+    if (!trigger) return;
+
+    e.preventDefault();
+
+    const modalId = trigger.getAttribute("data-open-modal");
+    const modal = document.getElementById(modalId);
+
+    if (!modal) {
+      console.warn("Modal not found:", modalId);
+      return;
+    }
+
+    // Use the same class Webflow uses to show modals
+    modal.classList.add("is-open");
+  });
 
   /**
    * Open Cropper modal for a given selected image File
