@@ -20,45 +20,49 @@ document.addEventListener("DOMContentLoaded", function () {
   const recipientEmailField = document.getElementById("recipient-email-field");
   const recipientEmailInput = document.getElementById("recipient-email");
 
-  // Send-direct toggle: show/hide recipient email + toggle required (delegated + re-query)
+  // Send-direct toggle: show/hide recipient email + toggle required
   (function setupSendDirectToggle() {
+    if (!form) return;
+
     const applyState = () => {
-      const toggle = document.getElementById("send-direct-toggle");
-      const field = document.getElementById("recipient-email-field");
-      const input = document.getElementById("recipient-email");
+      const toggle = form.querySelector("#send-direct-toggle");
+      const field = form.querySelector("#recipient-email-field");
+      const input = form.querySelector("#recipient-email");
       if (!toggle || !field || !input) return;
 
-      const on = !!toggle.checked;
+      const on = toggle.checked;
 
-      // Force visibility (beats Webflow inline/class hiding)
-      field.style.setProperty("display", on ? "block" : "none", "important");
+      // Show / hide via class (CSS handles layout)
+      field.classList.toggle("is-visible", on);
 
-      // If Webflow ever adds hidden-ish flags, clear them when ON
-      if (on) {
-        field.removeAttribute("hidden");
-        field.classList.remove("w-condition-invisible");
-      } else {
-        input.value = ""; // Optional: clear value when turning off
-      }
-
+      // Toggle required state
       input.required = on;
 
+      // Optional: clear value when turning off
+      if (!on) {
+        input.value = "";
+      }
 
       updateFormState();
     };
 
-    // Initialize on load
+    // Initialize on load (handles pre-checked cases)
     applyState();
 
-    // Delegated listeners (survives Webflow DOM replacement)
-    document.addEventListener("change", (e) => {
-      if (e.target && e.target.id === "send-direct-toggle") applyState();
+    // Listen only inside the form (avoids Webflow clones)
+    form.addEventListener("change", (e) => {
+      if (e.target && e.target.id === "send-direct-toggle") {
+        applyState();
+      }
     });
 
-    document.addEventListener("input", (e) => {
-      if (e.target && e.target.id === "recipient-email") updateFormState();
+    form.addEventListener("input", (e) => {
+      if (e.target && e.target.id === "recipient-email") {
+        updateFormState();
+      }
     });
   })();
+
 
 
 
