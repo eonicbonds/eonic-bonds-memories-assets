@@ -30,11 +30,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const on = !!toggle.checked;
 
-      field.classList.toggle("is-visible", on);
+      // Force visibility (beats Webflow inline/class hiding)
+      field.style.setProperty("display", on ? "block" : "none", "important");
+
+      // If Webflow ever adds hidden-ish flags, clear them when ON
+      if (on) {
+        field.removeAttribute("hidden");
+        field.classList.remove("w-condition-invisible");
+      } else {
+        input.value = ""; // Optional: clear value when turning off
+      }
+
       input.required = on;
 
-      // Optional: clear value when turning off
-      if (!on) input.value = "";
 
       updateFormState();
     };
