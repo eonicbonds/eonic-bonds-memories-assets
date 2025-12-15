@@ -107,12 +107,12 @@
 }
 
 /* Recipient email field — full row in gift grid */
-#recipient-email-field {
+#to-email-field {
   grid-column: 1 / -1;
   display: none !important;
 }
 
-#recipient-email-field.is-visible {
+#to-email-field.is-visible {
   display: block !important;
 }
 

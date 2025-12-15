@@ -15,17 +15,14 @@ document.addEventListener("DOMContentLoaded", function () {
   // Gift details fields
   const fromNameInput = document.getElementById("from-name");
   const toNameInput = document.getElementById("to-name");
-  const emailInput = document.getElementById("player-email");
-  const sendDirectToggle = document.getElementById("send-direct-toggle");
-  const recipientEmailField = document.getElementById("recipient-email-field");
-  const recipientEmailInput = document.getElementById("recipient-email");
+  const fromEmailInput = document.getElementById("from-email");
 
   // Send-direct toggle: show/hide recipient email + toggle required
   (function setupSendDirectToggle() {
     const applyState = () => {
       const toggle = document.getElementById("send-direct-toggle");
-      const field = document.getElementById("recipient-email-field");
-      const input = document.getElementById("recipient-email");
+      const field = document.getElementById("to-email-field");
+      const input = document.getElementById("to-email");
       if (!toggle || !field || !input) return;
 
       const on = toggle.checked;
@@ -52,7 +49,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Keep submit button state live while typing recipient email
     document.addEventListener("input", (e) => {
-      if (e.target && e.target.id === "recipient-email") {
+      if (e.target && e.target.id === "to-email") {
         updateFormState();
       }
     });
@@ -232,10 +229,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (!isFilled(fromNameInput)) allGiftFieldsValid = false;
     if (!isFilled(toNameInput)) allGiftFieldsValid = false;
-    if (!isFilled(emailInput)) allGiftFieldsValid = false;
+    if (!isFilled(fromEmailInput)) allGiftFieldsValid = false;
 
     const toggle = document.getElementById("send-direct-toggle");
-    const recipient = document.getElementById("recipient-email");
+    const recipient = document.getElementById("to-email");
 
     if (toggle && toggle.checked) {
       if (!isFilled(recipient)) allGiftFieldsValid = false;
@@ -598,14 +595,14 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // ✅ New: Guard for gift fields so we don't start uploads if they're empty
-    if (fromNameInput && toNameInput && emailInput) {
+    if (fromNameInput && toNameInput && fromEmailInput) {
       if (
         !fromNameInput.value.trim() ||
         !toNameInput.value.trim() ||
-        !emailInput.value.trim()
+        !fromEmailInput.value.trim()
       ) {
         setStatus(
-          "Please fill in who the game is from, who it’s for, and the email before continuing.",
+          "Please fill in who the game is from, who it’s for, and the senders email before continuing.",
           "error"
         );
         if (submitButton) submitButton.disabled = false;
@@ -616,7 +613,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // ✅ New: Send-direct guard (recipient email required if toggle is on)
     const liveToggle = document.getElementById("send-direct-toggle");
-    const liveRecipient = document.getElementById("recipient-email");
+    const liveRecipient = document.getElementById("to-email");
     const sendDirectOn = liveToggle && liveToggle.checked;
 
     if (sendDirectOn) {
