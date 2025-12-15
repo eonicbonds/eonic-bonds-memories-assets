@@ -109,11 +109,6 @@
 /* Recipient email field — full row in gift grid */
 #to-email-field {
   grid-column: 1 / -1;
-  display: none !important;
-}
-
-#to-email-field.is-visible {
-  display: block !important;
 }
 
 [hidden] { display: none !important; }
