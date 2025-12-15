@@ -239,10 +239,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const toggle = document.getElementById("send-direct-toggle");
     const fromEmail = document.getElementById("from-email");
-    const recipient = document.getElementById("to-email");
+    const toEmail = document.getElementById("to-email");
 
     if (toggle && toggle.checked) {
-      if (!isFilled(recipient)) allGiftFieldsValid = false;
+      if (!isFilled(toEmail)) allGiftFieldsValid = false;
 
       const fromVal = (fromEmail?.value || "").trim().toLowerCase();
       const toVal = (toEmail?.value || "").trim().toLowerCase();
