@@ -20,18 +20,21 @@ document.addEventListener("DOMContentLoaded", function () {
   const recipientEmailField = document.getElementById("recipient-email-field");
   const recipientEmailInput = document.getElementById("recipient-email");
 
-  // Send-direct toggle: show/hide recipient email + toggle required
+  // Send-direct toggle: show/hide recipient email + toggle required (delegated + re-query)
   (function setupSendDirectToggle() {
     const applyState = () => {
-      if (!sendDirectToggle || !recipientEmailField || !recipientEmailInput) return;
+      const toggle = document.getElementById("send-direct-toggle");
+      const field = document.getElementById("recipient-email-field");
+      const input = document.getElementById("recipient-email");
+      if (!toggle || !field || !input) return;
 
-      const on = !!sendDirectToggle.checked;
+      const on = !!toggle.checked;
 
-      recipientEmailField.style.display = on ? "" : "none";
-      recipientEmailInput.required = on;
+      field.style.display = on ? "" : "none";
+      input.required = on;
 
-      // Optional: clear value when turning off (prevents accidental submission)
-      if (!on) recipientEmailInput.value = "";
+      // Optional: clear value when turning off
+      if (!on) input.value = "";
 
       updateFormState();
     };
@@ -48,6 +51,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (e.target && e.target.id === "recipient-email") updateFormState();
     });
   })();
+
 
 
 
@@ -175,10 +179,11 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!isFilled(toNameInput)) allGiftFieldsValid = false;
     if (!isFilled(emailInput)) allGiftFieldsValid = false;
 
-    if (sendDirectToggle && sendDirectToggle.checked) {
-      if (!recipientEmailInput || !isFilled(recipientEmailInput)) {
-        allGiftFieldsValid = false;
-      }
+    const toggle = document.getElementById("send-direct-toggle");
+    const recipient = document.getElementById("recipient-email");
+
+    if (toggle && toggle.checked) {
+      if (!isFilled(recipient)) allGiftFieldsValid = false;
     }
 
 
@@ -504,7 +509,7 @@ document.addEventListener("DOMContentLoaded", function () {
       isUploading = false;
       return;
     }
-    
+
     // Use the session id we generated on page load
     sessionId = sessionInput ? (sessionInput.value || "").trim() : "";
 
@@ -557,7 +562,7 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
     }
-    
+
     const sendDirectOn = sendDirectToggle && sendDirectToggle.checked;
 
     if (sendDirectOn) {
