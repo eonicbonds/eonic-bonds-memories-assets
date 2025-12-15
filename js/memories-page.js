@@ -17,29 +17,49 @@ document.addEventListener("DOMContentLoaded", function () {
   const toNameInput = document.getElementById("to-name");
   const emailInput = document.getElementById("player-email");
   const customMessageInput = document.getElementById("custom-message");
-  const customMessageCounter = document.querySelector(
-    '.memories-char-counter[data-for="custom-message"]'
-  );
 
   // Custom message: char counter (optional field)
-  if (customMessageInput && customMessageCounter) {
-    // initialize counter on page load
-    ns.updateCharCounter(customMessageInput, customMessageCounter, 300);
+  if (customMessageInput) {
+    const getOrCreateCustomCounter = () => {
+      // Prefer a counter inside the same field block (most reliable)
+      const wrap = customMessageInput.closest(".memories-custom-message-field");
+      let counter =
+        (wrap && wrap.querySelector(".memories-char-counter")) ||
+        document.querySelector('.memories-char-counter[data-for="custom-message"]');
 
-    // update counter as user types
+      // If not found, create one so the feature still works
+      if (!counter && wrap) {
+        let footer = wrap.querySelector(".memories-field-footer");
+        if (!footer) {
+          footer = document.createElement("div");
+          footer.className = "memories-field-footer";
+          wrap.appendChild(footer);
+        }
+
+        counter = document.createElement("span");
+        counter.className = "memories-char-counter";
+        counter.setAttribute("data-for", "custom-message");
+        footer.appendChild(counter);
+      }
+
+      return counter;
+    };
+
+    const renderCustomCounter = () => {
+      const counterEl = getOrCreateCustomCounter();
+      if (counterEl) ns.updateCharCounter(customMessageInput, counterEl, 300);
+    };
+
+    // initialize on page load
+    renderCustomCounter();
+
+    // update as user types
     customMessageInput.addEventListener("input", () => {
-      ns.updateCharCounter(customMessageInput, customMessageCounter, 300);
+      renderCustomCounter();
       updateFormState();
     });
   }
 
-  // Gift fields: keep submit button state in sync as user types
-  [fromNameInput, toNameInput, emailInput].forEach((el) => {
-    if (!el) return;
-    el.addEventListener("input", () => {
-      updateFormState();
-    });
-  });
 
 
 
