@@ -232,10 +232,18 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!isFilled(fromEmailInput)) allGiftFieldsValid = false;
 
     const toggle = document.getElementById("send-direct-toggle");
+    const fromEmail = document.getElementById("from-email");
     const recipient = document.getElementById("to-email");
 
     if (toggle && toggle.checked) {
       if (!isFilled(recipient)) allGiftFieldsValid = false;
+
+      const fromVal = (fromEmail?.value || "").trim().toLowerCase();
+      const toVal = (toEmail?.value || "").trim().toLowerCase();
+
+      if (fromVal && toVal && fromVal === toVal) {
+        allGiftFieldsValid = false;
+      }
     }
 
 
@@ -539,60 +547,17 @@ document.addEventListener("DOMContentLoaded", function () {
    * - Second submit: let Webflow handle it normally
    */
   async function handleMemoriesSubmit(e) {
-    // Second submit (after uploads) → let Webflow handle it
+    // Second submit (after uploads) → allow native Webflow submit to happen
     if (hasUploadedForThisSubmit) {
-      hasUploadedForThisSubmit = false; // reset for next submission
       return;
     }
 
-    // First submit: intercept and run the Cloudinary pipeline
     e.preventDefault();
-    e.stopImmediatePropagation();
 
     if (isUploading) return;
     isUploading = true;
-    setStatus("");
 
-    if (!ns.CLOUD_NAME || !ns.UPLOAD_PRESET) {
-      setStatus(
-        "Cloudinary configuration missing. Please contact support.",
-        "error"
-      );
-      isUploading = false;
-      return;
-    }
-
-    // Use the session id we generated on page load
-    sessionId = sessionInput ? (sessionInput.value || "").trim() : "";
-
-    const blocks = grid.querySelectorAll(".memory-block");
-
-    // Guard: ensure all tiles are complete
-    let allComplete = true;
-    blocks.forEach((block) => {
-      const fileInput = block.querySelector(".memory-image-input");
-      const titleInput = block.querySelector(".memory-title-input");
-      const dateInput = block.querySelector(".memory-date-input");
-      const descInput = block.querySelector(".memory-description-input");
-
-      const file = fileInput && fileInput.files[0];
-      const title = titleInput && titleInput.value.trim();
-      const date = dateInput && dateInput.value.trim();
-      const desc = descInput && descInput.value.trim();
-
-      if (!file || !title || !date || !desc) {
-        allComplete = false;
-      }
-    });
-
-    if (!allComplete) {
-      setStatus(
-        "Please complete all 8 memories with image, title, month/year, and description.",
-        "error"
-      );
-      isUploading = false;
-      return;
-    }
+    if (submitButton) submitButton.disabled = true;
 
     // ✅ New: Guard for gift fields so we don't start uploads if they're empty
     if (fromNameInput && toNameInput && fromEmailInput) {
@@ -602,7 +567,7 @@ document.addEventListener("DOMContentLoaded", function () {
         !fromEmailInput.value.trim()
       ) {
         setStatus(
-          "Please fill in who the game is from, who it’s for, and the senders email before continuing.",
+          "Please fill in who the game is from, who it’s for, and the email before continuing.",
           "error"
         );
         if (submitButton) submitButton.disabled = false;
@@ -627,152 +592,124 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
     }
+
+    // ✅ New: Send-direct guard (from_email and to_email must be different)
+    if (sendDirectOn) {
+      const liveFrom = document.getElementById("from-email");
+      const fromVal = (liveFrom?.value || "").trim().toLowerCase();
+      const toVal = (liveRecipient?.value || "").trim().toLowerCase();
+
+      if (fromVal && toVal && fromVal === toVal) {
+        setStatus(
+          "Sender email and recipient email must be different. Please use two different email addresses (or turn off the send-direct option).",
+          "error"
+        );
+        if (submitButton) submitButton.disabled = false;
+        isUploading = false;
+        return;
+      }
+    }
+
     if (submitButton) submitButton.disabled = true;
 
     const memories = [];
 
+    // Verify all slots complete
+    for (let i = 1; i <= ns.TOTAL_SLOTS; i++) {
+      const slot = memoryData[i];
+      if (!slot || !slot.title || !slot.date || !slot.description || !slot.blob) {
+        setStatus(
+          "Please complete all memories before uploading.",
+          "error"
+        );
+        if (submitButton) submitButton.disabled = false;
+        isUploading = false;
+        return;
+      }
+    }
+
+    setStatus("Uploading memories… (0/" + ns.TOTAL_SLOTS + ")", "success");
+
     try {
-      setStatus("Uploading memories… (0/" + ns.TOTAL_SLOTS + ")", "success");
+      const sessionInput = document.getElementById("game-session-id");
+      const sessionId = sessionInput ? (sessionInput.value || "").trim() : "";
 
-      let uploadedCount = 0;
+      // Upload each memory image to Cloudinary
+      for (let i = 1; i <= ns.TOTAL_SLOTS; i++) {
+        const slot = memoryData[i];
 
-      // Upload each image
-      for (let i = 0; i < blocks.length; i++) {
-        const block = blocks[i];
-        const memoryNumber = i + 1;
-        const fileInput = block.querySelector(".memory-image-input");
-        const titleInput = block.querySelector(".memory-title-input");
-        const dateInput = block.querySelector(".memory-date-input");
-        const descInput = block.querySelector(".memory-description-input");
-
-        const file = fileInput.files[0];
-        const title = titleInput.value.trim();
-        const date = dateInput.value.trim();
-        const description = descInput.value.trim();
-
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("upload_preset", ns.UPLOAD_PRESET);
-        formData.append("folder", "our-matching-memories/images");
-        formData.append(
-          "context",
-          `memory_number=${memoryNumber}|title=${title}|date=${date}|description=${description}`
-        );
-        const tags = ["our-matching-memories"];
-        if (sessionId) tags.push(sessionId);
-        formData.append("tags", tags.join(","));
-
-        const res = await fetch(
-          `https://api.cloudinary.com/v1_1/${ns.CLOUD_NAME}/image/upload`,
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
-
-        if (!res.ok) {
-          const text = await res.text();
-          console.error("Cloudinary upload failed:", text);
-          throw new Error("Upload failed for Memory " + memoryNumber);
-        }
-
-        const data = await res.json();
-
-        memories.push({
-          memoryNumber,
-          title,
-          date,
-          description,
-          imageUrl: data.secure_url,
-          publicId: data.public_id,
-          width: data.width,
-          height: data.height,
+        const uploaded = await ns.uploadToCloudinary(slot.blob, {
+          folder: ns.CLOUDINARY_FOLDER,
+          uploadPreset: ns.CLOUDINARY_UPLOAD_PRESET,
         });
 
-        uploadedCount++;
+        memories.push({
+          slot: i,
+          title: slot.title,
+          date: slot.date,
+          description: slot.description,
+          secure_url: uploaded.secure_url,
+          public_id: uploaded.public_id,
+          width: uploaded.width,
+          height: uploaded.height,
+          bytes: uploaded.bytes,
+          format: uploaded.format,
+        });
+
         setStatus(
-          "Uploading memories… (" + uploadedCount + "/" + ns.TOTAL_SLOTS + ")",
+          "Uploading memories… (" + i + "/" + ns.TOTAL_SLOTS + ")",
           "success"
         );
       }
 
-      // Sort by date asc, then memoryNumber
-      memories.sort((a, b) => {
-        const d = a.date.localeCompare(b.date);
-        if (d !== 0) return d;
-        return a.memoryNumber - b.memoryNumber;
-      });
+      // Build JSON payload
+      const customMessageValue = customMessageInput
+        ? (customMessageInput.value || "").trim()
+        : "";
 
-      const payload = {
+      const jsonPayload = {
         sessionId: sessionId || null,
-        totalMemories: memories.length,
+        totalMemories: ns.TOTAL_SLOTS,
+        fromName: fromNameInput ? (fromNameInput.value || "").trim() : "",
+        toName: toNameInput ? (toNameInput.value || "").trim() : "",
+        fromEmail: fromEmailInput ? (fromEmailInput.value || "").trim() : "",
+        sendDirect: !!(liveToggle && liveToggle.checked),
+        toEmail: liveRecipient ? (liveRecipient.value || "").trim() : "",
+        customMessage: customMessageValue,
         memories,
       };
 
-      setStatus("Uploading JSON summary…", "success");
-
-      // Upload JSON payload as raw file to Cloudinary
-      const jsonBlob = new Blob([JSON.stringify(payload, null, 2)], {
-        type: "application/json",
+      // Upload JSON to Cloudinary
+      const jsonUploaded = await ns.uploadJsonToCloudinary(jsonPayload, {
+        folder: ns.CLOUDINARY_JSON_FOLDER,
+        uploadPreset: ns.CLOUDINARY_UPLOAD_PRESET,
       });
-      const jsonFormData = new FormData();
-      jsonFormData.append("file", jsonBlob, "memories.json");
-      jsonFormData.append("upload_preset", ns.UPLOAD_PRESET);
-      jsonFormData.append("folder", "our-matching-memories/json");
-      const jsonTags = ["our-matching-memories-json"];
-      if (sessionId) jsonTags.push(sessionId);
-      jsonFormData.append("tags", jsonTags.join(","));
-
-      const jsonRes = await fetch(
-        `https://api.cloudinary.com/v1_1/${ns.CLOUD_NAME}/raw/upload`,
-        {
-          method: "POST",
-          body: jsonFormData,
-        }
-      );
-
-      if (!jsonRes.ok) {
-        const text = await jsonRes.text();
-        console.error("Cloudinary JSON upload failed:", text);
-        throw new Error("Upload failed for memories JSON.");
-      }
-
-      const jsonData = await jsonRes.json();
 
       // Populate hidden fields for Zapier/Webflow
-      if (jsonPublicIdField) jsonPublicIdField.value = jsonData.public_id;
-      if (jsonUrlField) jsonUrlField.value = jsonData.secure_url;
+      const jsonPublicIdInput = document.getElementById("cloudinary-json-public-id");
+      const jsonUrlInput = document.getElementById("cloudinary-json-url");
 
-      setStatus(
-        "All memories uploaded! Finishing your submission…",
-        "success"
-      );
+      if (jsonPublicIdInput) jsonPublicIdInput.value = jsonUploaded.public_id || "";
+      if (jsonUrlInput) jsonUrlInput.value = jsonUploaded.secure_url || "";
 
-      // Mark that we've finished the Cloudinary side for this submit
+      // Mark that uploads are done for THIS submit click
       hasUploadedForThisSubmit = true;
-      isUploading = false;
 
-      // Trigger a *new* submit event that Webflow's handler will catch
-      if (form.requestSubmit) {
-        form.requestSubmit();
-      } else {
-        const evt = new Event("submit", {
-          bubbles: true,
-          cancelable: true,
-        });
-        form.dispatchEvent(evt);
-      }
+      // Now allow native Webflow submit to proceed by programmatically submitting
+      form.submit();
     } catch (err) {
       console.error(err);
       setStatus(
-        err && err.message
-          ? err.message
-          : "Something went wrong while uploading your memories.",
+        "Something went wrong while uploading your memories.",
         "error"
       );
       if (submitButton) submitButton.disabled = false;
+    } finally {
       isUploading = false;
-      hasUploadedForThisSubmit = false;
+      // Important: if we failed, allow retry; if we succeeded, keep hasUploadedForThisSubmit true
+      if (!hasUploadedForThisSubmit) {
+        hasUploadedForThisSubmit = false;
+      }
     }
   }
 
