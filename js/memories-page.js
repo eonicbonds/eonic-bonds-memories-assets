@@ -28,42 +28,36 @@ document.addEventListener("DOMContentLoaded", function () {
       const input = document.getElementById("recipient-email");
       if (!toggle || !field || !input) return;
 
-      const on = !!toggle.checked;
+      const on = toggle.checked;
 
-      // Use native hidden/disabled to avoid CSS precedence issues with Webflow
+      // Native visibility (no CSS fighting)
       field.hidden = !on;
       input.disabled = !on;
       input.required = on;
 
-      // Optional: clear value when turning off
       if (!on) input.value = "";
 
       updateFormState();
     };
 
-    // Initialize on load
+    // Initialize once on load
     applyState();
 
-    // Use BOTH label clicks + input changes to be bulletproof
-    document.addEventListener("click", (e) => {
-      const labelClicked = e.target && e.target.closest && e.target.closest('label[for="send-direct-toggle"]');
-      const inputClicked = e.target && e.target.id === "send-direct-toggle";
-      if (labelClicked || inputClicked) {
-        // wait for the checkbox checked state to update
-        setTimeout(applyState, 0);
+    // ✅ THIS is the key line — fires AFTER checked state updates
+    document.addEventListener("input", (e) => {
+      if (e.target && e.target.id === "send-direct-toggle") {
+        applyState();
       }
     });
 
-    document.addEventListener("change", (e) => {
-      const isToggle = e.target && e.target.id === "send-direct-toggle";
-      if (isToggle) applyState();
-    });
-
-
+    // Keep submit button state live while typing recipient email
     document.addEventListener("input", (e) => {
-      if (e.target && e.target.id === "recipient-email") updateFormState();
+      if (e.target && e.target.id === "recipient-email") {
+        updateFormState();
+      }
     });
   })();
+
 
 
 
