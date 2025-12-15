@@ -262,31 +262,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Consent links → trigger existing Webflow modal buttons
-  document.addEventListener("click", (e) => {
-    const link = e.target.closest("[data-trigger]");
-    if (!link) return;
-
-    e.preventDefault();
-
-    const type = link.getAttribute("data-trigger");
-    const triggerId =
-      type === "terms" ? "terms-trigger" :
-        type === "privacy" ? "privacy-trigger" :
-          null;
-
-    if (!triggerId) return;
-
-    const realTrigger = document.getElementById(triggerId);
-    if (!realTrigger) {
-      console.warn("Webflow modal trigger not found:", triggerId);
-      return;
-    }
-
-    // 🔥 THIS is the magic: let Webflow handle the modal
-    realTrigger.click();
-  });
-
 
   /**
    * Open Cropper modal for a given selected image File
@@ -751,4 +726,53 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // NOTE: capture = true so we run before Webflow's own submit handler
   form.addEventListener("submit", handleMemoriesSubmit, true);
+
+  // Terms / Privacy modals — Webflow-export safe (bypass IX2)
+  (function setupPolicyModals() {
+    function openModalById(id) {
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      modal.style.display = "flex"; // modal-wrapper-2 expects flex
+      modal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeModal(modal) {
+      if (!modal) return;
+      modal.style.display = "none";
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    // Open from consent links
+    document.addEventListener("click", (e) => {
+      const link = e.target.closest("[data-open-modal]");
+      if (!link) return;
+
+      e.preventDefault();
+      const modalId = link.getAttribute("data-open-modal");
+      openModalById(modalId);
+    });
+
+    // Close on backdrop or close button
+    document.addEventListener("click", (e) => {
+      const modal = e.target.closest(".modal-wrapper-2");
+      if (!modal) return;
+
+      const clickedBackdrop = e.target.closest(".div-block-38");
+      const clickedClose = e.target.closest("a.link-block");
+
+      if (clickedBackdrop || clickedClose) {
+        e.preventDefault();
+        closeModal(modal);
+      }
+    });
+
+    // ESC closes any open policy modal
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      document.querySelectorAll(".modal-wrapper-2").forEach((m) => {
+        if (getComputedStyle(m).display !== "none") closeModal(m);
+      });
+    });
+  })();
+
 });
