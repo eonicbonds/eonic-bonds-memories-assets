@@ -184,6 +184,12 @@ document.addEventListener("DOMContentLoaded", function () {
   let isUploading = false;
   let hasUploadedForThisSubmit = false;
 
+  window.addEventListener("pageshow", () => {
+    hasUploadedForThisSubmit = false;
+    isUploading = false;
+  });
+
+
   /**
    * Set status text and optional type (success|error)
    */
@@ -558,10 +564,12 @@ document.addEventListener("DOMContentLoaded", function () {
    * - Second submit: let Webflow handle it normally
    */
   async function handleMemoriesSubmit(e) {
-    // Second submit (after uploads) → allow native Webflow submit to happen
     if (hasUploadedForThisSubmit) {
-      return;
+      // second pass: allow Webflow to submit normally, but don't "stick" true forever
+      hasUploadedForThisSubmit = false;
+      return; // don't preventDefault on this pass
     }
+
 
     e.preventDefault();
 
@@ -719,7 +727,8 @@ document.addEventListener("DOMContentLoaded", function () {
       hasUploadedForThisSubmit = true;
 
       // Now allow native Webflow submit to proceed by programmatically submitting
-      form.submit();
+      form.requestSubmit();
+
     } catch (err) {
       console.error(err);
       setStatus(
