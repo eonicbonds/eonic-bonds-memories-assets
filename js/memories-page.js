@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const fromNameInput = document.getElementById("from-name");
   const toNameInput = document.getElementById("to-name");
   const emailInput = document.getElementById("player-email");
-  const winMessageInput = document.getElementById("win-message");
+  const winMessageInput = document.getElementById("custom-message");
 
   const jsonPublicIdField = document.getElementById(
     "cloudinary-json-public-id"
@@ -105,7 +105,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!isFilled(fromNameInput)) allGiftFieldsValid = false;
     if (!isFilled(toNameInput)) allGiftFieldsValid = false;
     if (!isFilled(emailInput)) allGiftFieldsValid = false;
-    if (!isFilled(winMessageInput)) allGiftFieldsValid = false;
 
     if (progressCountEl) {
       progressCountEl.textContent = String(completeCount);
@@ -466,14 +465,12 @@ document.addEventListener("DOMContentLoaded", function () {
     if (
       fromNameInput &&
       toNameInput &&
-      emailInput &&
-      winMessageInput
+      emailInput
     ) {
       if (
         !fromNameInput.value.trim() ||
         !toNameInput.value.trim() ||
-        !emailInput.value.trim() ||
-        !winMessageInput.value.trim()
+        !emailInput.value.trim()
       ) {
         setStatus(
           "Please fill in who the game is from, who it’s for, the email, and the win message before continuing.",
