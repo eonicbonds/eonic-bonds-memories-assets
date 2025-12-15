@@ -96,6 +96,16 @@
   }
 }
 
+.memories-send-direct-field label.memories-label {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.memories-checkbox {
+  margin-top: 3px;
+}
+
 
 /* CARD GRID */
 

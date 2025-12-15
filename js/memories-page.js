@@ -16,7 +16,40 @@ document.addEventListener("DOMContentLoaded", function () {
   const fromNameInput = document.getElementById("from-name");
   const toNameInput = document.getElementById("to-name");
   const emailInput = document.getElementById("player-email");
-  const customMessageInput = document.getElementById("custom-message");
+  const sendDirectToggle = document.getElementById("send-direct-toggle");
+  const recipientEmailField = document.getElementById("recipient-email-field");
+  const recipientEmailInput = document.getElementById("recipient-email");
+
+  // Send-direct toggle: show/hide recipient email + toggle required
+  (function setupSendDirectToggle() {
+    const applyState = () => {
+      if (!sendDirectToggle || !recipientEmailField || !recipientEmailInput) return;
+
+      const on = !!sendDirectToggle.checked;
+
+      recipientEmailField.style.display = on ? "" : "none";
+      recipientEmailInput.required = on;
+
+      // Optional: clear value when turning off (prevents accidental submission)
+      if (!on) recipientEmailInput.value = "";
+
+      updateFormState();
+    };
+
+    // Initialize on load
+    applyState();
+
+    // Delegated listeners (survives Webflow DOM replacement)
+    document.addEventListener("change", (e) => {
+      if (e.target && e.target.id === "send-direct-toggle") applyState();
+    });
+
+    document.addEventListener("input", (e) => {
+      if (e.target && e.target.id === "recipient-email") updateFormState();
+    });
+  })();
+
+
 
   // Custom message: char counter (optional field) — resilient to Webflow DOM replacement
   (function setupCustomMessageCounter() {
@@ -141,6 +174,13 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!isFilled(fromNameInput)) allGiftFieldsValid = false;
     if (!isFilled(toNameInput)) allGiftFieldsValid = false;
     if (!isFilled(emailInput)) allGiftFieldsValid = false;
+
+    if (sendDirectToggle && sendDirectToggle.checked) {
+      if (!recipientEmailInput || !isFilled(recipientEmailInput)) {
+        allGiftFieldsValid = false;
+      }
+    }
+
 
     if (progressCountEl) {
       progressCountEl.textContent = String(completeCount);
@@ -517,7 +557,20 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
     }
+    
+    const sendDirectOn = sendDirectToggle && sendDirectToggle.checked;
 
+    if (sendDirectOn) {
+      if (!recipientEmailInput || !recipientEmailInput.value.trim()) {
+        setStatus(
+          "Please enter your recipient’s email (or turn off the send-direct option) before continuing.",
+          "error"
+        );
+        if (submitButton) submitButton.disabled = false;
+        isUploading = false;
+        return;
+      }
+    }
 
     if (submitButton) submitButton.disabled = true;
 

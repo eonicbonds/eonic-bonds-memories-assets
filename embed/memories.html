@@ -1,204 +1,163 @@
 <section class="memories-page-section">
-  <div class="memories-page-container">
-    <div class="w-form">
-      <form
-        id="memories-form"
-        name="memories-form"
-        method="post"
-        data-name="Memories Form"
-      >
-        <!-- Header -->
-        <div class="memories-page-header">
-          <div class="memories-page-kicker">Our Matching Memories</div>
-          <h1 class="memories-page-heading">Upload your memories</h1>
-          <p class="memories-page-subtitle">
-            Add 8 moments with a title, month/year, and a short description.
-            We’ll turn them into a custom memory game board.
-          </p>
-          <!-- Hidden game session identifier used to link uploads, checkout, and game -->
-          <input
-            id="game-session-id"
-            name="game_session_id"
-            type="hidden"
-          />
-        </div>
+    <div class="memories-page-container">
+        <div class="w-form">
+            <form id="memories-form" name="memories-form" method="post" data-name="Memories Form">
+                <!-- Header -->
+                <div class="memories-page-header">
+                    <div class="memories-page-kicker">Our Matching Memories</div>
+                    <h1 class="memories-page-heading">Upload your memories</h1>
+                    <p class="memories-page-subtitle">
+                        Add 8 moments with a title, month/year, and a short description.
+                        We’ll turn them into a custom memory game board.
+                    </p>
+                    <!-- Hidden game session identifier used to link uploads, checkout, and game -->
+                    <input id="game-session-id" name="game_session_id" type="hidden" />
+                </div>
                 <!-- Gift details -->
-        <div class="memories-gift-section">
-          <h2 class="memories-gift-heading">Who is this game for?</h2>
-          <p class="memories-gift-subtitle">
-            We’ll use this info for checkout and to personalize your memory game.
-          </p>
+                <div class="memories-gift-section">
+                    <h2 class="memories-gift-heading">Who is this game for?</h2>
+                    <p class="memories-gift-subtitle">
+                        We’ll use this info for checkout and to personalize your memory game.
+                    </p>
 
-          <div class="memories-gift-grid">
-            <div class="memories-field">
-              <label for="from-name" class="memories-label">From</label>
-              <input
-                id="from-name"
-                name="from_name"
-                type="text"
-                class="memories-input"
-                placeholder="Your name"
-                required
-              />
+                    <div class="memories-gift-grid">
+                        <div class="memories-field">
+                            <label for="from-name" class="memories-label">From</label>
+                            <input id="from-name" name="from_name" type="text" class="memories-input"
+                                placeholder="Your name" required />
+                        </div>
+
+                        <div class="memories-field">
+                            <label for="to-name" class="memories-label">To</label>
+                            <input id="to-name" name="to_name" type="text" class="memories-input"
+                                placeholder="Their name" required />
+                        </div>
+
+                        <div class="memories-field">
+                            <label for="player-email" class="memories-label">Email for checkout & game link</label>
+                            <input id="player-email" name="player_email" type="email" class="memories-input"
+                                placeholder="name@email.com" required />
+                            <p class="memories-help-text">
+                                We’ll send the checkout link and the final game URL to this email.
+                            </p>
+                        </div>
+
+                        <div class="memories-field memories-send-direct-field">
+                            <label class="memories-label" for="send-direct-toggle">
+                                <input id="send-direct-toggle" name="send_direct" type="checkbox"
+                                    class="memories-checkbox" />
+                                Check this if you’d like us to send your gift directly to your recipient
+                            </label>
+
+                            <p class="memories-help-text">
+                                If checked, we’ll email the game link to your recipient after checkout.
+                            </p>
+                        </div>
+
+                        <div class="memories-field" id="recipient-email-field" style="display: none;">
+                            <label for="recipient-email" class="memories-label">Recipient email</label>
+                            <input id="recipient-email" name="recipient_email" type="email" class="memories-input"
+                                placeholder="recipient@email.com" />
+                            <p class="memories-help-text">
+                                Required only if you want us to send it directly to your recipient.
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+
+
+                <!-- Dynamic tiles are injected here by JS -->
+                <div class="memories-form-wrapper">
+                    <div id="memories-grid" class="memories-grid"></div>
+                </div>
+
+                <!-- Custom message (optional) -->
+                <div class="memories-field memories-custom-message-field">
+                    <label for="custom-message" class="memories-label">Custom message</label>
+                    <textarea id="custom-message" name="custom_message" class="memories-textarea" maxlength="300"
+                        placeholder="Optional — shown when the game is completed."></textarea>
+
+                    <div class="memories-field-footer">
+                        <span class="memories-char-counter" data-for="custom-message">0/300</span>
+                    </div>
+                </div>
+
+
+
+                <!-- Progress + status + button -->
+                <div class="memories-footer-row">
+                    <div class="memories-progress-row">
+                        <div class="memories-progress-label">
+                            <strong><span id="memories-progress-count">0</span>/8</strong>
+                            memories complete
+                        </div>
+                        <div class="memories-progress-bar-track">
+                            <div id="memories-progress-bar" class="memories-progress-bar-fill"></div>
+                        </div>
+                    </div>
+
+                    <div id="status-message" class="memories-status-text"></div>
+
+                    <div class="memories-actions-row">
+                        <button id="submit-memories" type="submit" class="memories-primary-button" disabled>
+                            <span class="memories-button-icon">⬆️</span>
+                            Upload memories
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hidden fields for Cloudinary JSON file info -->
+                <input type="hidden" id="cloudinary-json-public-id" name="cloudinary_json_public_id" />
+                <input type="hidden" id="cloudinary-json-url" name="cloudinary_json_url" />
+            </form>
+
+            <!-- Webflow success message (styled as Boopi celebration) -->
+            <div class="w-form-done memories-success-wrapper">
+                <div class="memories-success-inner">
+                    <img src="https://res.cloudinary.com/dfrolhhx9/image/upload/v1733596800/boopi-celebrating-placeholder.png"
+                        alt="Celebrating Boopi" class="memories-success-boopi" />
+                    <div class="memories-success-heading">Memories received! 🎉</div>
+                    <div class="memories-success-subtitle">
+                        Your memories have been uploaded. We’ll use them to assemble your
+                        custom memory game. You can safely close this page now.
+                    </div>
+                    <button type="button" class="memories-success-close" onclick="window.location.href='/'">
+                        Back to home
+                    </button>
+                </div>
             </div>
 
-            <div class="memories-field">
-              <label for="to-name" class="memories-label">To</label>
-              <input
-                id="to-name"
-                name="to_name"
-                type="text"
-                class="memories-input"
-                placeholder="Their name"
-                required
-              />
-            </div>
-
-            <div class="memories-field">
-              <label for="player-email" class="memories-label">Email for checkout & game link</label>
-              <input
-                id="player-email"
-                name="player_email"
-                type="email"
-                class="memories-input"
-                placeholder="name@email.com"
-                required
-              />
-              <p class="memories-help-text">
-                We’ll send the checkout link and the final game URL to this email.
-              </p>
-            </div>
-          </div>
-        </div>
-
-
-        <!-- Dynamic tiles are injected here by JS -->
-        <div class="memories-form-wrapper">
-          <div id="memories-grid" class="memories-grid"></div>
-        </div>
-
-        <!-- Custom message (optional) -->
-        <div class="memories-field memories-custom-message-field">
-            <label for="custom-message" class="memories-label">Custom message</label>
-            <textarea
-                id="custom-message"
-                name="custom_message"
-                class="memories-textarea"
-                maxlength="300"
-                placeholder="Optional — shown when the game is completed."
-            ></textarea>
-
-            <div class="memories-field-footer">
-                <span class="memories-char-counter" data-for="custom-message">0/300</span>
+            <!-- Webflow error message -->
+            <div class="w-form-fail">
+                <div class="memories-fail-message">
+                    Oops! Something went wrong while submitting the form. Please try
+                    again.
+                </div>
             </div>
         </div>
-
-
-
-        <!-- Progress + status + button -->
-        <div class="memories-footer-row">
-          <div class="memories-progress-row">
-            <div class="memories-progress-label">
-              <strong><span id="memories-progress-count">0</span>/8</strong>
-              memories complete
-            </div>
-            <div class="memories-progress-bar-track">
-              <div
-                id="memories-progress-bar"
-                class="memories-progress-bar-fill"
-              ></div>
-            </div>
-          </div>
-
-          <div id="status-message" class="memories-status-text"></div>
-
-          <div class="memories-actions-row">
-            <button
-              id="submit-memories"
-              type="submit"
-              class="memories-primary-button"
-              disabled
-            >
-              <span class="memories-button-icon">⬆️</span>
-              Upload memories
-            </button>
-          </div>
-        </div>
-
-        <!-- Hidden fields for Cloudinary JSON file info -->
-        <input
-          type="hidden"
-          id="cloudinary-json-public-id"
-          name="cloudinary_json_public_id"
-        />
-        <input
-          type="hidden"
-          id="cloudinary-json-url"
-          name="cloudinary_json_url"
-        />
-      </form>
-
-      <!-- Webflow success message (styled as Boopi celebration) -->
-      <div class="w-form-done memories-success-wrapper">
-        <div class="memories-success-inner">
-          <img
-            src="https://res.cloudinary.com/dfrolhhx9/image/upload/v1733596800/boopi-celebrating-placeholder.png"
-            alt="Celebrating Boopi"
-            class="memories-success-boopi"
-          />
-          <div class="memories-success-heading">Memories received! 🎉</div>
-          <div class="memories-success-subtitle">
-            Your memories have been uploaded. We’ll use them to assemble your
-            custom memory game. You can safely close this page now.
-          </div>
-          <button
-            type="button"
-            class="memories-success-close"
-            onclick="window.location.href='/'"
-          >
-            Back to home
-          </button>
-        </div>
-      </div>
-
-      <!-- Webflow error message -->
-      <div class="w-form-fail">
-        <div class="memories-fail-message">
-          Oops! Something went wrong while submitting the form. Please try
-          again.
-        </div>
-      </div>
     </div>
-  </div>
 
-  <!-- Cropper modal -->
-  <div id="memories-cropper-modal" class="memories-cropper-modal">
-    <div class="memories-cropper-backdrop"></div>
-    <div class="memories-cropper-dialog">
-      <div class="memories-cropper-title">Adjust your memory</div>
-      <div class="memories-cropper-help">
-        Zoom and drag to frame your memory in a square. This is how it will
-        appear in the game.
-      </div>
-      <div class="memories-cropper-canvas-wrap">
-        <img id="cropper-image" alt="Crop selected memory" />
-      </div>
-      <div class="memories-cropper-actions">
-        <button
-          type="button"
-          id="cropper-cancel"
-          class="memories-cropper-button cancel"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          id="cropper-apply"
-          class="memories-cropper-button apply"
-        >
-          Use crop
-        </button>
-      </div>
+    <!-- Cropper modal -->
+    <div id="memories-cropper-modal" class="memories-cropper-modal">
+        <div class="memories-cropper-backdrop"></div>
+        <div class="memories-cropper-dialog">
+            <div class="memories-cropper-title">Adjust your memory</div>
+            <div class="memories-cropper-help">
+                Zoom and drag to frame your memory in a square. This is how it will
+                appear in the game.
+            </div>
+            <div class="memories-cropper-canvas-wrap">
+                <img id="cropper-image" alt="Crop selected memory" />
+            </div>
+            <div class="memories-cropper-actions">
+                <button type="button" id="cropper-cancel" class="memories-cropper-button cancel">
+                    Cancel
+                </button>
+                <button type="button" id="cropper-apply" class="memories-cropper-button apply">
+                    Use crop
+                </button>
+            </div>
+        </div>
     </div>
-  </div>
 </section>
