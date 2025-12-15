@@ -22,42 +22,42 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Send-direct toggle: show/hide recipient email + toggle required
   (function setupSendDirectToggle() {
-    if (!form) return;
-
     const applyState = () => {
-      const toggle = form.querySelector("#send-direct-toggle");
-      const field = form.querySelector("#recipient-email-field");
-      const input = form.querySelector("#recipient-email");
+      const toggle = document.getElementById("send-direct-toggle");
+      const field = document.getElementById("recipient-email-field");
+      const input = document.getElementById("recipient-email");
       if (!toggle || !field || !input) return;
 
-      const on = toggle.checked;
+      const on = !!toggle.checked;
 
+      // Use native hidden/disabled to avoid CSS precedence issues with Webflow
       field.hidden = !on;
       input.disabled = !on;
       input.required = on;
 
       // Optional: clear value when turning off
-      if (!on) {
-        input.value = "";
-      }
+      if (!on) input.value = "";
 
       updateFormState();
     };
 
-    // Initialize on load (handles pre-checked cases)
+    // Initialize on load
     applyState();
 
-    // Listen only inside the form (avoids Webflow clones)
-    form.addEventListener("change", (e) => {
+    // Delegated listeners: resilient to Webflow DOM replacement and label-click quirks
+    document.addEventListener("click", (e) => {
       if (e.target && e.target.id === "send-direct-toggle") {
-        applyState();
+        // click can fire before checked state updates; defer one tick
+        setTimeout(applyState, 0);
       }
     });
 
-    form.addEventListener("input", (e) => {
-      if (e.target && e.target.id === "recipient-email") {
-        updateFormState();
-      }
+    document.addEventListener("change", (e) => {
+      if (e.target && e.target.id === "send-direct-toggle") applyState();
+    });
+
+    document.addEventListener("input", (e) => {
+      if (e.target && e.target.id === "recipient-email") updateFormState();
     });
   })();
 
@@ -553,11 +553,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // ✅ New: Guard for gift fields so we don't start uploads if they're empty
-    if (
-      fromNameInput &&
-      toNameInput &&
-      emailInput
-    ) {
+    if (fromNameInput && toNameInput && emailInput) {
       if (
         !fromNameInput.value.trim() ||
         !toNameInput.value.trim() ||
@@ -573,10 +569,13 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
 
-    const sendDirectOn = sendDirectToggle && sendDirectToggle.checked;
+    // ✅ New: Send-direct guard (recipient email required if toggle is on)
+    const liveToggle = document.getElementById("send-direct-toggle");
+    const liveRecipient = document.getElementById("recipient-email");
+    const sendDirectOn = liveToggle && liveToggle.checked;
 
     if (sendDirectOn) {
-      if (!recipientEmailInput || !recipientEmailInput.value.trim()) {
+      if (!liveRecipient || !liveRecipient.value.trim()) {
         setStatus(
           "Please enter your recipient’s email (or turn off the send-direct option) before continuing.",
           "error"
@@ -586,7 +585,6 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
     }
-
     if (submitButton) submitButton.disabled = true;
 
     const memories = [];
