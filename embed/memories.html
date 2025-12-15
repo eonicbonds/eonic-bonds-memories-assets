@@ -13,86 +13,89 @@
                     <!-- Hidden game session identifier used to link uploads, checkout, and game -->
                     <input id="game-session-id" name="game_session_id" type="hidden" />
                 </div>
-                <!-- Gift details -->
-                <div class="memories-gift-section">
-                    <h2 class="memories-gift-heading">Who is this game for?</h2>
-                    <p class="memories-gift-subtitle">
-                        We’ll use this info for checkout and to personalize your memory game.
-                    </p>
+                <!-- Snapshot area start -->
+                <div class="memories-snapshot-area">
+                    <!-- Gift details -->
+                    <div class="memories-gift-section">
+                        <h2 class="memories-gift-heading">Who is this game for?</h2>
+                        <p class="memories-gift-subtitle">
+                            We’ll use this info for checkout and to personalize your memory game.
+                        </p>
 
-                    <div class="memories-gift-grid">
-                        <div class="memories-field">
-                            <label for="from-name" class="memories-label">From</label>
-                            <input id="from-name" name="from_name" type="text" class="memories-input"
-                                placeholder="Your name" maxlength="20" required />
-                            <div class="memories-field-footer">
-                                <span class="memories-char-counter" data-for="from-name">0/20</span>
+                        <div class="memories-gift-grid">
+                            <div class="memories-field">
+                                <label for="from-name" class="memories-label">From</label>
+                                <input id="from-name" name="from_name" type="text" class="memories-input"
+                                    placeholder="Your name" maxlength="20" required />
+                                <div class="memories-field-footer">
+                                    <span class="memories-char-counter" data-for="from-name">0/20</span>
+                                </div>
                             </div>
-                        </div>
 
 
-                        <div class="memories-field">
-                            <label for="to-name" class="memories-label">To</label>
-                            <input id="to-name" name="to_name" type="text" class="memories-input"
-                                placeholder="Their name" maxlength="20" required />
-                            <div class="memories-field-footer">
-                                <span class="memories-char-counter" data-for="to-name">0/20</span>
+                            <div class="memories-field">
+                                <label for="to-name" class="memories-label">To</label>
+                                <input id="to-name" name="to_name" type="text" class="memories-input"
+                                    placeholder="Their name" maxlength="20" required />
+                                <div class="memories-field-footer">
+                                    <span class="memories-char-counter" data-for="to-name">0/20</span>
+                                </div>
                             </div>
+
+
+                            <div class="memories-field">
+                                <label for="from-email" class="memories-label">Email for checkout & game link</label>
+                                <input id="from-email" name="from_email" type="email" class="memories-input"
+                                    placeholder="name@email.com" required />
+                                <p class="memories-help-text">
+                                    We’ll send the checkout link and the final game URL to this email.
+                                </p>
+                            </div>
+
+                            <div class="memories-field memories-send-direct-field">
+                                <label class="memories-label" for="send-direct-toggle">
+                                    <input id="send-direct-toggle" name="send_direct" type="checkbox"
+                                        class="memories-checkbox" />
+                                    Check this if you’d like us to send your gift directly to your recipient
+                                </label>
+
+                                <p class="memories-help-text">
+                                    If checked, we’ll email the game link to your recipient after checkout.
+                                </p>
+                            </div>
+
+                            <div class="memories-field" id="to-email-field" hidden>
+                                <label for="to-email" class="memories-label">Recipient email</label>
+                                <input id="to-email" name="to_email" type="email" class="memories-input"
+                                    placeholder="recipient@email.com" />
+                                <p class="memories-help-text">
+                                    Required only if you want us to send it directly to your recipient.
+                                </p>
+                            </div>
+
+
                         </div>
-
-
-                        <div class="memories-field">
-                            <label for="from-email" class="memories-label">Email for checkout & game link</label>
-                            <input id="from-email" name="from_email" type="email" class="memories-input"
-                                placeholder="name@email.com" required />
-                            <p class="memories-help-text">
-                                We’ll send the checkout link and the final game URL to this email.
-                            </p>
-                        </div>
-
-                        <div class="memories-field memories-send-direct-field">
-                            <label class="memories-label" for="send-direct-toggle">
-                                <input id="send-direct-toggle" name="send_direct" type="checkbox"
-                                    class="memories-checkbox" />
-                                Check this if you’d like us to send your gift directly to your recipient
-                            </label>
-
-                            <p class="memories-help-text">
-                                If checked, we’ll email the game link to your recipient after checkout.
-                            </p>
-                        </div>
-
-                        <div class="memories-field" id="to-email-field" hidden>
-                            <label for="to-email" class="memories-label">Recipient email</label>
-                            <input id="to-email" name="to_email" type="email" class="memories-input"
-                                placeholder="recipient@email.com" />
-                            <p class="memories-help-text">
-                                Required only if you want us to send it directly to your recipient.
-                            </p>
-                        </div>
-
-
                     </div>
-                </div>
 
 
-                <!-- Dynamic tiles are injected here by JS -->
-                <div class="memories-form-wrapper">
-                    <div id="memories-grid" class="memories-grid"></div>
-                </div>
-
-                <!-- Custom message (optional) -->
-                <div class="memories-field memories-custom-message-field">
-                    <label for="custom-message" class="memories-label">Custom message</label>
-                    <textarea id="custom-message" name="custom_message" class="memories-textarea" maxlength="300"
-                        placeholder="Optional — shown when the game is completed."></textarea>
-
-                    <div class="memories-field-footer">
-                        <span class="memories-char-counter" data-for="custom-message">0/300</span>
+                    <!-- Dynamic tiles are injected here by JS -->
+                    <div class="memories-form-wrapper">
+                        <div id="memories-grid" class="memories-grid"></div>
                     </div>
+
+                    <!-- Custom message (optional) -->
+                    <div class="memories-field memories-custom-message-field">
+                        <label for="custom-message" class="memories-label">Custom message</label>
+                        <textarea id="custom-message" name="custom_message" class="memories-textarea" maxlength="300"
+                            placeholder="Optional — shown when the game is completed."></textarea>
+
+                        <div class="memories-field-footer">
+                            <span class="memories-char-counter" data-for="custom-message">0/300</span>
+                        </div>
+                    </div>
+
                 </div>
-
-
+                <!-- Snapshot area end -->
 
                 <!-- Progress + status + button -->
                 <div class="memories-footer-row">
