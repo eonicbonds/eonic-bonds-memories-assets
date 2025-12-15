@@ -114,12 +114,16 @@
                         <a href="#" data-open-modal="privacy-modal">Privacy Policy</a>.
                     </p>
                     <div class="memories-actions-row">
-                        <button id="submit-memories" type="submit" class="memories-primary-button" disabled>
+                        <button id="submit-memories" type="submit" class="memories-primary-button">
                             <span class="memories-button-icon">⬆️</span>
                             Upload memories
                         </button>
                     </div>
                 </div>
+
+                <!-- Hidden fields for Cloudinary snapshot info -->
+                <input type="hidden" id="cloudinary-snapshot-url" name="cloudinary_snapshot_url" />
+                <input type="hidden" id="cloudinary-snapshot-public-id" name="cloudinary_snapshot_public_id" />
 
                 <!-- Hidden fields for Cloudinary JSON file info -->
                 <input type="hidden" id="cloudinary-json-public-id" name="cloudinary_json_public_id" />

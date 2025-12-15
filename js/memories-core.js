@@ -15,6 +15,8 @@ window.EonicMemories = window.EonicMemories || {};
   // Folders (adjust as you prefer)
   ns.CLOUDINARY_FOLDER = "our-matching-memories/images";
   ns.CLOUDINARY_JSON_FOLDER = "our-matching-memories/json";
+  ns.CLOUDINARY_SNAPSHOT_FOLDER = "our-matching-memories/snapshots";
+
 
 
   /**
