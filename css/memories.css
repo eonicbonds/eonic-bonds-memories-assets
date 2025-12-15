@@ -106,6 +106,16 @@
   margin-top: 3px;
 }
 
+/* Recipient email toggle */
+#recipient-email-field {
+  display: none;
+}
+
+#recipient-email-field.is-visible {
+  display: block;
+}
+
+
 
 /* CARD GRID */
 

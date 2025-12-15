@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const on = !!toggle.checked;
 
-      field.style.display = on ? "" : "none";
+      field.classList.toggle("is-visible", on);
       input.required = on;
 
       // Optional: clear value when turning off
