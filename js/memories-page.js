@@ -44,17 +44,21 @@ document.addEventListener("DOMContentLoaded", function () {
     // Initialize on load
     applyState();
 
-    // Delegated listeners: resilient to Webflow DOM replacement and label-click quirks
+    // Use BOTH label clicks + input changes to be bulletproof
     document.addEventListener("click", (e) => {
-      if (e.target && e.target.id === "send-direct-toggle") {
-        // click can fire before checked state updates; defer one tick
+      const labelClicked = e.target && e.target.closest && e.target.closest('label[for="send-direct-toggle"]');
+      const inputClicked = e.target && e.target.id === "send-direct-toggle";
+      if (labelClicked || inputClicked) {
+        // wait for the checkbox checked state to update
         setTimeout(applyState, 0);
       }
     });
 
     document.addEventListener("change", (e) => {
-      if (e.target && e.target.id === "send-direct-toggle") applyState();
+      const isToggle = e.target && e.target.id === "send-direct-toggle";
+      if (isToggle) applyState();
     });
+
 
     document.addEventListener("input", (e) => {
       if (e.target && e.target.id === "recipient-email") updateFormState();
