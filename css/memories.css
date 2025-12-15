@@ -382,10 +382,11 @@
 
 .memories-actions-row {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
 }
 
 .memories-primary-button {
+  width: auto;
   border-radius: 999px;
   border: none;
   padding: 12px 26px;
