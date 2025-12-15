@@ -18,49 +18,40 @@ document.addEventListener("DOMContentLoaded", function () {
   const emailInput = document.getElementById("player-email");
   const customMessageInput = document.getElementById("custom-message");
 
-  // Custom message: char counter (optional field)
-  if (customMessageInput) {
-    const getOrCreateCustomCounter = () => {
-      // Prefer a counter inside the same field block (most reliable)
-      const wrap = customMessageInput.closest(".memories-custom-message-field");
-      let counter =
-        (wrap && wrap.querySelector(".memories-char-counter")) ||
-        document.querySelector('.memories-char-counter[data-for="custom-message"]');
+  // Custom message: char counter (optional field) — resilient to Webflow DOM replacement
+  (function setupCustomMessageCounter() {
+    const MAX = 300;
 
-      // If not found, create one so the feature still works
-      if (!counter && wrap) {
-        let footer = wrap.querySelector(".memories-field-footer");
-        if (!footer) {
-          footer = document.createElement("div");
-          footer.className = "memories-field-footer";
-          wrap.appendChild(footer);
-        }
+    const render = () => {
+      const input = document.getElementById("custom-message");
+      const counter = document.querySelector(
+        '.memories-char-counter[data-for="custom-message"]'
+      );
+      if (!input || !counter) return;
 
-        counter = document.createElement("span");
-        counter.className = "memories-char-counter";
-        counter.setAttribute("data-for", "custom-message");
-        footer.appendChild(counter);
+      // Update text directly (span counter)
+      counter.textContent = `${(input.value || "").length}/${MAX}`;
+    };
+
+    // Initialize once on load
+    render();
+
+    // Event delegation: survives Webflow replacing the textarea node
+    document.addEventListener("input", (e) => {
+      if (e.target && e.target.id === "custom-message") {
+        render();
+        updateFormState();
       }
-
-      return counter;
-    };
-
-    const renderCustomCounter = () => {
-      const counterEl = getOrCreateCustomCounter();
-      if (counterEl) ns.updateCharCounter(customMessageInput, counterEl, 300);
-    };
-
-    // initialize on page load
-    renderCustomCounter();
-
-    // update as user types
-    customMessageInput.addEventListener("input", () => {
-      renderCustomCounter();
-      updateFormState();
     });
-  }
 
-
+    // Extra safety for autofill/paste edge cases
+    document.addEventListener("change", (e) => {
+      if (e.target && e.target.id === "custom-message") {
+        render();
+        updateFormState();
+      }
+    });
+  })();
 
 
   const jsonPublicIdField = document.getElementById(
