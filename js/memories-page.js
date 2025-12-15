@@ -564,109 +564,111 @@ document.addEventListener("DOMContentLoaded", function () {
    * - Second submit: let Webflow handle it normally
    */
   async function handleMemoriesSubmit(e) {
+    // Second pass (after uploads) → let Webflow handle it normally
     if (hasUploadedForThisSubmit) {
-      // second pass: allow Webflow to submit normally, but don't "stick" true forever
-      hasUploadedForThisSubmit = false;
-      return; // don't preventDefault on this pass
+      hasUploadedForThisSubmit = false; // reset for next time
+      return; // do NOT preventDefault here
     }
 
-
+    // First pass: intercept and run the Cloudinary pipeline
     e.preventDefault();
+    e.stopImmediatePropagation(); // ✅ critical: prevents Webflow from submitting right now
 
     if (isUploading) return;
     isUploading = true;
 
-    if (submitButton) submitButton.disabled = true;
+    try {
+      if (submitButton) submitButton.disabled = true;
+      setStatus("");
 
-    // ✅ New: Guard for gift fields so we don't start uploads if they're empty
-    if (fromNameInput && toNameInput && fromEmailInput) {
-      if (
-        !fromNameInput.value.trim() ||
-        !toNameInput.value.trim() ||
-        !fromEmailInput.value.trim()
-      ) {
+      // --- Gift validation ---
+      const liveToggle = document.getElementById("send-direct-toggle");
+      const sendDirectOn = !!(liveToggle && liveToggle.checked);
+
+      const liveFromEmail = document.getElementById("from-email");
+      const liveToEmail = document.getElementById("to-email");
+
+      if (!fromNameInput?.value.trim() || !toNameInput?.value.trim() || !liveFromEmail?.value.trim()) {
         setStatus(
           "Please fill in who the game is from, who it’s for, and the email before continuing.",
           "error"
         );
-        if (submitButton) submitButton.disabled = false;
-        isUploading = false;
         return;
       }
-    }
 
-    // ✅ New: Send-direct guard (recipient email required if toggle is on)
-    const liveToggle = document.getElementById("send-direct-toggle");
-    const liveRecipient = document.getElementById("to-email");
-    const sendDirectOn = liveToggle && liveToggle.checked;
+      if (sendDirectOn) {
+        if (!liveToEmail?.value.trim()) {
+          setStatus(
+            "Please enter your recipient’s email (or turn off the send-direct option) before continuing.",
+            "error"
+          );
+          return;
+        }
 
-    if (sendDirectOn) {
-      if (!liveRecipient || !liveRecipient.value.trim()) {
-        setStatus(
-          "Please enter your recipient’s email (or turn off the send-direct option) before continuing.",
-          "error"
-        );
-        if (submitButton) submitButton.disabled = false;
-        isUploading = false;
+        const fromVal = (liveFromEmail.value || "").trim().toLowerCase();
+        const toVal = (liveToEmail.value || "").trim().toLowerCase();
+        if (fromVal && toVal && fromVal === toVal) {
+          setStatus(
+            "Sender email and recipient email must be different. Please use two different email addresses (or turn off the send-direct option).",
+            "error"
+          );
+          return;
+        }
+      }
+
+      // --- Collect + validate memories from DOM (no memoryData) ---
+      const blocks = grid.querySelectorAll(".memory-block");
+      if (!blocks || blocks.length !== ns.TOTAL_SLOTS) {
+        setStatus("Memories grid is not ready. Please refresh and try again.", "error");
         return;
       }
-    }
 
-    // ✅ New: Send-direct guard (from_email and to_email must be different)
-    if (sendDirectOn) {
-      const liveFrom = document.getElementById("from-email");
-      const fromVal = (liveFrom?.value || "").trim().toLowerCase();
-      const toVal = (liveRecipient?.value || "").trim().toLowerCase();
+      // Ensure all 8 are complete before uploading
+      for (let i = 0; i < blocks.length; i++) {
+        const block = blocks[i];
+        const fileInput = block.querySelector(".memory-image-input");
+        const titleInput = block.querySelector(".memory-title-input");
+        const dateInput = block.querySelector(".memory-date-input");
+        const descInput = block.querySelector(".memory-description-input");
 
-      if (fromVal && toVal && fromVal === toVal) {
-        setStatus(
-          "Sender email and recipient email must be different. Please use two different email addresses (or turn off the send-direct option).",
-          "error"
-        );
-        if (submitButton) submitButton.disabled = false;
-        isUploading = false;
-        return;
+        const file = fileInput && fileInput.files && fileInput.files[0];
+        const title = (titleInput?.value || "").trim();
+        const date = (dateInput?.value || "").trim();
+        const desc = (descInput?.value || "").trim();
+
+        if (!file || !title || !date || !desc) {
+          setStatus(
+            "Please complete all 8 memories with image, title, month/year, and description.",
+            "error"
+          );
+          return;
+        }
       }
-    }
 
-    if (submitButton) submitButton.disabled = true;
+      // --- Upload images ---
+      const sessionId = (sessionInput?.value || "").trim();
+      const memories = [];
 
-    const memories = [];
+      setStatus(`Uploading memories… (0/${ns.TOTAL_SLOTS})`, "success");
 
-    // Verify all slots complete
-    for (let i = 1; i <= ns.TOTAL_SLOTS; i++) {
-      const slot = memoryData[i];
-      if (!slot || !slot.title || !slot.date || !slot.description || !slot.blob) {
-        setStatus(
-          "Please complete all memories before uploading.",
-          "error"
-        );
-        if (submitButton) submitButton.disabled = false;
-        isUploading = false;
-        return;
-      }
-    }
+      for (let i = 0; i < blocks.length; i++) {
+        const block = blocks[i];
+        const fileInput = block.querySelector(".memory-image-input");
+        const titleInput = block.querySelector(".memory-title-input");
+        const dateInput = block.querySelector(".memory-date-input");
+        const descInput = block.querySelector(".memory-description-input");
 
-    setStatus("Uploading memories… (0/" + ns.TOTAL_SLOTS + ")", "success");
-
-    try {
-      const sessionInput = document.getElementById("game-session-id");
-      const sessionId = sessionInput ? (sessionInput.value || "").trim() : "";
-
-      // Upload each memory image to Cloudinary
-      for (let i = 1; i <= ns.TOTAL_SLOTS; i++) {
-        const slot = memoryData[i];
-
-        const uploaded = await ns.uploadToCloudinary(slot.blob, {
+        const file = fileInput.files[0]; // this is the cropped File (because you replace fileInput.files)
+        const uploaded = await ns.uploadToCloudinary(file, {
           folder: ns.CLOUDINARY_FOLDER,
           uploadPreset: ns.CLOUDINARY_UPLOAD_PRESET,
         });
 
         memories.push({
-          slot: i,
-          title: slot.title,
-          date: slot.date,
-          description: slot.description,
+          slot: i + 1,
+          title: (titleInput.value || "").trim(),
+          date: (dateInput.value || "").trim(),
+          description: (descInput.value || "").trim(),
           secure_url: uploaded.secure_url,
           public_id: uploaded.public_id,
           width: uploaded.width,
@@ -675,75 +677,54 @@ document.addEventListener("DOMContentLoaded", function () {
           format: uploaded.format,
         });
 
-        setStatus(
-          "Uploading memories… (" + i + "/" + ns.TOTAL_SLOTS + ")",
-          "success"
-        );
+        setStatus(`Uploading memories… (${i + 1}/${ns.TOTAL_SLOTS})`, "success");
       }
 
-      // Build JSON payload
-      const customMessageValue = customMessageInput
-        ? (customMessageInput.value || "").trim()
-        : "";
+      // --- Build + upload JSON ---
+      const customMessageValue = (document.getElementById("custom-message")?.value || "").trim();
 
       const jsonPayload = {
         sessionId: sessionId || null,
         totalMemories: ns.TOTAL_SLOTS,
-        fromName: fromNameInput ? (fromNameInput.value || "").trim() : "",
-        toName: toNameInput ? (toNameInput.value || "").trim() : "",
-        fromEmail: fromEmailInput ? (fromEmailInput.value || "").trim() : "",
-        sendDirect: !!(liveToggle && liveToggle.checked),
-        toEmail: liveRecipient ? (liveRecipient.value || "").trim() : "",
+        fromName: (fromNameInput?.value || "").trim(),
+        toName: (toNameInput?.value || "").trim(),
+        fromEmail: (liveFromEmail?.value || "").trim(),
+        sendDirect: sendDirectOn,
+        toEmail: (liveToEmail?.value || "").trim(),
         customMessage: customMessageValue,
         memories,
       };
 
-      // Upload JSON to Cloudinary
       const jsonUploaded = await ns.uploadJsonToCloudinary(jsonPayload, {
         folder: ns.CLOUDINARY_JSON_FOLDER,
         uploadPreset: ns.CLOUDINARY_UPLOAD_PRESET,
       });
 
-      // Populate hidden fields for Zapier/Webflow
       const jsonPublicIdInput = document.getElementById("cloudinary-json-public-id");
       const jsonUrlInput = document.getElementById("cloudinary-json-url");
 
       if (jsonPublicIdInput && jsonUploaded.public_id) {
-        const fullId = jsonUploaded.public_id;
-
-        // Strip folders and extension:
-        // "our-matching-memories/json/abc123.json" → "abc123"
-        const filenameOnly = fullId
-          .split("/")                // take last path segment
+        const filenameOnly = String(jsonUploaded.public_id)
+          .split("/")
           .pop()
-          .replace(/\.[^.]+$/, "");  // remove extension
-
+          .replace(/\.[^.]+$/, "");
         jsonPublicIdInput.value = filenameOnly;
       }
 
       if (jsonUrlInput) jsonUrlInput.value = jsonUploaded.secure_url || "";
 
-      // Mark that uploads are done for THIS submit click
+      // --- Trigger Webflow submit as a second pass ---
       hasUploadedForThisSubmit = true;
-
-      // Now allow native Webflow submit to proceed by programmatically submitting
       form.requestSubmit();
-
     } catch (err) {
       console.error(err);
-      setStatus(
-        "Something went wrong while uploading your memories.",
-        "error"
-      );
+      setStatus("Something went wrong while uploading your memories.", "error");
       if (submitButton) submitButton.disabled = false;
     } finally {
       isUploading = false;
-      // Important: if we failed, allow retry; if we succeeded, keep hasUploadedForThisSubmit true
-      if (!hasUploadedForThisSubmit) {
-        hasUploadedForThisSubmit = false;
-      }
     }
   }
+
 
   // NOTE: capture = true so we run before Webflow's own submit handler
   form.addEventListener("submit", handleMemoriesSubmit, true);
