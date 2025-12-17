@@ -868,6 +868,13 @@ document.addEventListener("DOMContentLoaded", function () {
     return uploaded; // has secure_url, public_id, width, height, bytes, format
   }
 
+  function formatMonthYear(input) {
+    const [month, year] = input.split('-');
+  
+    const date = new Date(year, month - 1); // month is 0-based
+    return date.toLocaleString('en-US', { month: 'short' }).toUpperCase() + year;
+  }
+
   /**
    * Submit handler (capture phase so we run before Webflow's own handler):
    * - First submit: intercept, upload to Cloudinary, then trigger a second submit
@@ -947,7 +954,7 @@ document.addEventListener("DOMContentLoaded", function () {
         memories.push({
           slot: i + 1,
           title: (titleInput.value || "").trim(),
-          date: (dateInput.value || "").trim(),
+          date: formatMonthYear((dateInput.value || "").trim()),
           description: (descInput.value || "").trim(),
           secure_url: uploaded.secure_url,
           public_id: uploaded.public_id,
