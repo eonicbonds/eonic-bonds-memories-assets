@@ -200,54 +200,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if (type) statusEl.classList.add(type);
   }
 
-  /**
-   * Month/Year helpers
-   * Expected user input: MM-YYYY (example: 09-2025)
-   */
-  const MONTH_YEAR_RE = /^(0[1-9]|1[0-2])-(\d{4})$/;
-
-  function isValidMonthYear(value) {
-    return MONTH_YEAR_RE.test((value || "").trim());
-  }
-
-  // Light input masking: keeps only digits, auto-inserts dash after MM, max length 7.
-  function applyMonthYearMask(inputEl) {
-    if (!inputEl) return;
-    const raw = (inputEl.value || "").replace(/[^0-9]/g, "").slice(0, 6); // MMYYYY
-    if (raw.length <= 2) {
-      inputEl.value = raw;
-      return;
-    }
-    inputEl.value = `${raw.slice(0, 2)}-${raw.slice(2)}`;
-  }
-
-  // Optional: if flatpickr + monthSelectPlugin are present, enhance the text field.
-  function initMonthYearPicker(inputEl) {
-    if (!inputEl) return;
-    if (!window.flatpickr) return;
-    if (!window.monthSelectPlugin) return;
-
-    try {
-      window.flatpickr(inputEl, {
-        allowInput: true,
-        dateFormat: "m-Y", // produces MM-YYYY
-        plugins: [
-          new window.monthSelectPlugin({
-            shorthand: true,
-            dateFormat: "m-Y",
-            altFormat: "F Y",
-          }),
-        ],
-        onChange: () => {
-          // flatpickr already formats, but keep our state in sync
-          updateFormState();
-        },
-      });
-    } catch (err) {
-      console.warn("Month picker init failed; falling back to manual typing.", err);
-    }
-  }
-
 
   // -----------------------------
   // Validation UI (blur + submit)
@@ -400,7 +352,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // These don't have native required attributes, so treat them as required by rule
       const titleVal = (titleInput?.value || "").trim();
-      const dateVal = (dateInput?.value || "").trim();
+      const dateVal = getMonthYearValue(dateInput);
       const descVal = (descInput?.value || "").trim();
 
       if (!titleVal) {
@@ -412,9 +364,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (!dateVal) {
         if (showPerFieldErrors) setFieldError(dateInput, `Month/Year (Memory ${slot}) is required.`);
-        ok = false;
-      } else if (!isValidMonthYear(dateVal)) {
-        if (showPerFieldErrors) setFieldError(dateInput, `Use MM-YYYY (example: 09-2025).`);
         ok = false;
       } else if (showPerFieldErrors) {
         clearFieldError(dateInput);
@@ -512,10 +461,10 @@ document.addEventListener("DOMContentLoaded", function () {
           if ((t.value || "").trim()) clearFieldError(t);
           else setFieldError(t, "Title is required.");
         } else if (t.classList.contains("memory-date-input")) {
-          const v = (t.value || "").trim();
-          if (!v) setFieldError(t, "Month/Year is required.");
-          else if (!isValidMonthYear(v)) setFieldError(t, "Use MM-YYYY (example: 09-2025).");
-          else clearFieldError(t);
+          const norm = getMonthYearValue(t);
+          if (norm) clearFieldError(t);
+          else if (((t.value || "")).trim()) setFieldError(t, "Use MM-YYYY (e.g., 09-2025).");
+          else setFieldError(t, "Month/Year is required.");
         } else if (t.classList.contains("memory-description-input")) {
           if ((t.value || "").trim()) clearFieldError(t);
           else setFieldError(t, "Description is required.");
@@ -560,7 +509,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const file = fileInput && fileInput.files && fileInput.files[0];
       const title = titleInput && titleInput.value.trim();
-      const date = dateInput && dateInput.value.trim();
+      const date = getMonthYearValue(dateInput);
       const desc = descInput && descInput.value.trim();
 
       const cardComplete = !!file && !!title && !!date && !!desc;
@@ -727,25 +676,11 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
 
-    // Date field
+    // Date field (Safari-friendly MM-YYYY + optional month picker)
     if (dateInput) {
-      // Optional cross-browser month picker enhancement (flatpickr)
-      initMonthYearPicker(dateInput);
-
-      // Mask + live progress update
-      dateInput.addEventListener("input", () => {
-        applyMonthYearMask(dateInput);
-        updateFormState();
-      });
-
-      // Some browsers / autofill trigger change instead of input
-      dateInput.addEventListener("change", () => {
-        applyMonthYearMask(dateInput);
-        updateFormState();
-      });
+      initMonthYearInput(dateInput);
     }
-
-    // File input change
+// File input change
     if (fileInput) {
       fileInput.addEventListener("change", () => {
         const file = fileInput.files[0];
@@ -864,8 +799,8 @@ document.addEventListener("DOMContentLoaded", function () {
             class="memories-input memory-date-input"
             placeholder="MM-YYYY"
             inputmode="numeric"
-            maxlength="7"
             autocomplete="off"
+            aria-label="Month and Year (MM-YYYY)"
           />
         </div>
 
@@ -944,6 +879,116 @@ document.addEventListener("DOMContentLoaded", function () {
     const date = new Date(year, month - 1); // month is 0-based
     return date.toLocaleString('en-US', { month: 'short' }).toUpperCase() + "-" + year;
   }
+
+  // --- Month/Year parsing + validation (MM-YYYY) ---
+  function normalizeMonthYear(raw) {
+    const v = (raw || "").trim();
+    if (!v) return "";
+
+    // MM-YYYY or M-YYYY
+    let m1 = v.match(/^(\d{1,2})-(\d{4})$/);
+    if (m1) {
+      const mm = String(Number(m1[1])).padStart(2, "0");
+      const yyyy = m1[2];
+      const mNum = Number(mm);
+      if (mNum >= 1 && mNum <= 12) return `${mm}-${yyyy}`;
+      return "";
+    }
+
+    // YYYY-MM
+    let m2 = v.match(/^(\d{4})-(\d{1,2})$/);
+    if (m2) {
+      const yyyy = m2[1];
+      const mm = String(Number(m2[2])).padStart(2, "0");
+      const mNum = Number(mm);
+      if (mNum >= 1 && mNum <= 12) return `${mm}-${yyyy}`;
+      return "";
+    }
+
+    // MMMYYYY or MMM YYYY (English)
+    let m3 = v.toUpperCase().match(/^([A-Z]{3})\s*(\d{4})$/);
+    if (m3) {
+      const mon = m3[1];
+      const yyyy = m3[2];
+      const map = { JAN: "01", FEB: "02", MAR: "03", APR: "04", MAY: "05", JUN: "06", JUL: "07", AUG: "08", SEP: "09", OCT: "10", NOV: "11", DEC: "12" };
+      const mm = map[mon];
+      return mm ? `${mm}-${yyyy}` : "";
+    }
+
+    return "";
+  }
+
+  function getMonthYearValue(inputEl) {
+    if (!inputEl) return "";
+    let v = (inputEl.value || "").trim();
+
+    // If a picker created a separate visible input, grab from there.
+    // (We still normalize to MM-YYYY and write it back to inputEl.value.)
+    if (!v && inputEl._flatpickr) {
+      v = (inputEl._flatpickr.input?.value || "").trim() || (inputEl._flatpickr.altInput?.value || "").trim();
+    }
+
+    // If flatpickr has a selected date, derive the canonical value.
+    if ((!v || !normalizeMonthYear(v)) && inputEl._flatpickr?.selectedDates?.[0]) {
+      const d = inputEl._flatpickr.selectedDates[0];
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const yyyy = String(d.getFullYear());
+      v = `${mm}-${yyyy}`;
+    }
+
+    const norm = normalizeMonthYear(v);
+    if (norm) inputEl.value = norm; // keep canonical form for payload + validation
+    return norm;
+  }
+
+  function initMonthYearInput(inputEl) {
+    if (!inputEl) return;
+
+    // Always treat as a text field (Safari-friendly)
+    try { inputEl.type = "text"; } catch (_) {}
+    inputEl.placeholder = "MM-YYYY";
+    inputEl.setAttribute("inputmode", "numeric");
+    inputEl.setAttribute("autocomplete", "off");
+
+    // Simple masking: force digits + auto-insert dash after MM
+    inputEl.addEventListener("input", () => {
+      const digits = (inputEl.value || "").replace(/[^0-9]/g, "").slice(0, 6); // MMYYYY
+      const mm = digits.slice(0, 2);
+      const yyyy = digits.slice(2, 6);
+      inputEl.value = yyyy ? `${mm}-${yyyy}` : mm;
+      updateFormState();
+    });
+
+    // Validate / normalize on blur
+    inputEl.addEventListener("blur", () => {
+      const norm = getMonthYearValue(inputEl);
+      if (norm) clearFieldError(inputEl);
+      else if ((inputEl.value || "").trim()) setFieldError(inputEl, "Use MM-YYYY (e.g., 09-2025).");
+      else setFieldError(inputEl, "Month/Year is required.");
+    });
+
+    // Enhance with month picker if available (flatpickr + monthSelectPlugin)
+    if (window.flatpickr && window.monthSelectPlugin) {
+      window.flatpickr(inputEl, {
+        allowInput: true,
+        disableMobile: true,
+        plugins: [
+          window.monthSelectPlugin({
+            shorthand: true,
+            dateFormat: "m-Y", // -> "09-2025"
+            altFormat: "M Y"
+          })
+        ],
+        dateFormat: "m-Y",
+        onChange: (selectedDates, dateStr) => {
+          // Ensure the canonical value lands on the actual input we validate
+          inputEl.value = normalizeMonthYear(dateStr) || dateStr || "";
+          updateFormState();
+        }
+      });
+    }
+  }
+
 
   /**
    * Submit handler (capture phase so we run before Webflow's own handler):
@@ -1024,7 +1069,7 @@ document.addEventListener("DOMContentLoaded", function () {
         memories.push({
           slot: i + 1,
           title: (titleInput.value || "").trim(),
-          date: formatMonthYear((dateInput.value || "").trim()),
+          date: formatMonthYear(getMonthYearValue(dateInput) || ""),
           description: (descInput.value || "").trim(),
           secure_url: uploaded.secure_url,
           public_id: uploaded.public_id,
