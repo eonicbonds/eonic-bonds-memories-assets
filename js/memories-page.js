@@ -200,6 +200,54 @@ document.addEventListener("DOMContentLoaded", function () {
     if (type) statusEl.classList.add(type);
   }
 
+  /**
+   * Month/Year helpers
+   * Expected user input: MM-YYYY (example: 09-2025)
+   */
+  const MONTH_YEAR_RE = /^(0[1-9]|1[0-2])-(\d{4})$/;
+
+  function isValidMonthYear(value) {
+    return MONTH_YEAR_RE.test((value || "").trim());
+  }
+
+  // Light input masking: keeps only digits, auto-inserts dash after MM, max length 7.
+  function applyMonthYearMask(inputEl) {
+    if (!inputEl) return;
+    const raw = (inputEl.value || "").replace(/[^0-9]/g, "").slice(0, 6); // MMYYYY
+    if (raw.length <= 2) {
+      inputEl.value = raw;
+      return;
+    }
+    inputEl.value = `${raw.slice(0, 2)}-${raw.slice(2)}`;
+  }
+
+  // Optional: if flatpickr + monthSelectPlugin are present, enhance the text field.
+  function initMonthYearPicker(inputEl) {
+    if (!inputEl) return;
+    if (!window.flatpickr) return;
+    if (!window.monthSelectPlugin) return;
+
+    try {
+      window.flatpickr(inputEl, {
+        allowInput: true,
+        dateFormat: "m-Y", // produces MM-YYYY
+        plugins: [
+          new window.monthSelectPlugin({
+            shorthand: true,
+            dateFormat: "m-Y",
+            altFormat: "F Y",
+          }),
+        ],
+        onChange: () => {
+          // flatpickr already formats, but keep our state in sync
+          updateFormState();
+        },
+      });
+    } catch (err) {
+      console.warn("Month picker init failed; falling back to manual typing.", err);
+    }
+  }
+
 
   // -----------------------------
   // Validation UI (blur + submit)
@@ -365,6 +413,9 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!dateVal) {
         if (showPerFieldErrors) setFieldError(dateInput, `Month/Year (Memory ${slot}) is required.`);
         ok = false;
+      } else if (!isValidMonthYear(dateVal)) {
+        if (showPerFieldErrors) setFieldError(dateInput, `Use MM-YYYY (example: 09-2025).`);
+        ok = false;
       } else if (showPerFieldErrors) {
         clearFieldError(dateInput);
       }
@@ -461,8 +512,10 @@ document.addEventListener("DOMContentLoaded", function () {
           if ((t.value || "").trim()) clearFieldError(t);
           else setFieldError(t, "Title is required.");
         } else if (t.classList.contains("memory-date-input")) {
-          if ((t.value || "").trim()) clearFieldError(t);
-          else setFieldError(t, "Month/Year is required.");
+          const v = (t.value || "").trim();
+          if (!v) setFieldError(t, "Month/Year is required.");
+          else if (!isValidMonthYear(v)) setFieldError(t, "Use MM-YYYY (example: 09-2025).");
+          else clearFieldError(t);
         } else if (t.classList.contains("memory-description-input")) {
           if ((t.value || "").trim()) clearFieldError(t);
           else setFieldError(t, "Description is required.");
@@ -676,7 +729,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Date field
     if (dateInput) {
-      dateInput.addEventListener("change", updateFormState);
+      // Optional cross-browser month picker enhancement (flatpickr)
+      initMonthYearPicker(dateInput);
+
+      // Mask + live progress update
+      dateInput.addEventListener("input", () => {
+        applyMonthYearMask(dateInput);
+        updateFormState();
+      });
+
+      // Some browsers / autofill trigger change instead of input
+      dateInput.addEventListener("change", () => {
+        applyMonthYearMask(dateInput);
+        updateFormState();
+      });
     }
 
     // File input change
@@ -794,8 +860,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
         <div class="memories-field">
           <input
-            type="month"
+            type="text"
             class="memories-input memory-date-input"
+            placeholder="MM-YYYY"
+            inputmode="numeric"
+            maxlength="7"
+            autocomplete="off"
           />
         </div>
 
@@ -872,7 +942,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const [month, year] = input.split('-');
   
     const date = new Date(year, month - 1); // month is 0-based
-    return date.toLocaleString('en-US', { month: 'short' }).toUpperCase() + year;
+    return date.toLocaleString('en-US', { month: 'short' }).toUpperCase() + "-" + year;
   }
 
   /**
