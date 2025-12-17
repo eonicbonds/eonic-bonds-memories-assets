@@ -974,7 +974,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const [month, year] = input.split('-');
   
     const date = new Date(year, month - 1); // month is 0-based
-    return date.toLocaleString('en-US', { month: 'short' }).toUpperCase() + year;
+    return date.toLocaleString('en-US', { month: 'short' }).toUpperCase() + "-" + year;
   }
 
   /**
