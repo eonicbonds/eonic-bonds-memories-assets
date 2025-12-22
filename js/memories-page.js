@@ -205,6 +205,26 @@ document.addEventListener("DOMContentLoaded", function () {
    * Expected user input: MM-YYYY (example: 09-2025)
    */
   const MONTH_YEAR_RE = /^(0[1-9]|1[0-2])-(\d{4})$/;
+  // Accepts formatted month-year like "OCT-2025"
+  const MONTH_YEAR_MMM_RE = /^(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)-(\d{4})$/i;
+  const MMM_TO_MM = {
+    JAN: "01", FEB: "02", MAR: "03", APR: "04", MAY: "05", JUN: "06",
+    JUL: "07", AUG: "08", SEP: "09", OCT: "10", NOV: "11", DEC: "12",
+  };
+
+  function isValidMonthYearMMM(value) {
+    return MONTH_YEAR_MMM_RE.test((value || "").trim());
+  }
+
+  function mmmToMmYear(value) {
+    const v = (value || "").trim();
+    const match = v.match(MONTH_YEAR_MMM_RE);
+    if (!match) return "";
+    const mon = (match[1] || "").toUpperCase();
+    const year = match[2];
+    return `${MMM_TO_MM[mon]}-${year}`;
+  }
+
 
   function isValidMonthYear(value) {
     return MONTH_YEAR_RE.test((value || "").trim());
@@ -213,6 +233,8 @@ document.addEventListener("DOMContentLoaded", function () {
   // Light input masking: keeps only digits, auto-inserts dash after MM, max length 7.
   function applyMonthYearMask(inputEl) {
     if (!inputEl) return;
+    // If already formatted as MMM-YYYY, don't apply numeric masking.
+    if (/[a-zA-Z]/.test(inputEl.value || "")) return;
     const raw = (inputEl.value || "").replace(/[^0-9]/g, "").slice(0, 6); // MMYYYY
     if (raw.length <= 2) {
       inputEl.value = raw;
@@ -224,15 +246,28 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function validateMonthYearField(inputEl) {
     if (!inputEl) return true;
-    const v = (inputEl.value || "").trim();
-    if (!v) {
+
+    const raw = (inputEl.value || "").trim();
+    if (!raw) {
       setFieldError(inputEl, "Month/Year is required.");
       return false;
     }
-    if (!isValidMonthYear(v)) {
+
+    // Allow either MM-YYYY (picker / typing) or already-formatted MMM-YYYY.
+    let mmYYYY = raw;
+    if (isValidMonthYearMMM(raw)) {
+      mmYYYY = mmmToMmYear(raw);
+    }
+
+    if (!isValidMonthYear(mmYYYY)) {
       setFieldError(inputEl, "Use MM-YYYY (example: 09-2025).");
       return false;
     }
+
+    // Normalize display to MMM-YYYY and stash the raw MM-YYYY for the date picker.
+    inputEl.dataset.mmYYYY = mmYYYY;
+    inputEl.value = formatMonthYear(mmYYYY);
+
     clearFieldError(inputEl);
     return true;
   }
@@ -545,8 +580,8 @@ document.addEventListener("DOMContentLoaded", function () {
           if ((t.value || "").trim()) clearFieldError(t);
           else setFieldError(t, "Title is required.");
         } else if (t.classList.contains("memory-date-input")) {
-          // Let flatpickr drive validation to avoid "required" flashing while the picker is committing.
-          if (t._flatpickr) return;
+          // If the picker is open, let it finish committing the value first.
+          if (t._flatpickr && t._flatpickr.isOpen) return;
           validateMonthYearField(t);
         } else if (t.classList.contains("memory-description-input")) {
           if ((t.value || "").trim()) clearFieldError(t);
@@ -556,7 +591,25 @@ document.addEventListener("DOMContentLoaded", function () {
       true
     );
 
+    
+    // Month/Year inputs: when focusing a formatted value (MMM-YYYY), convert back to MM-YYYY
+    // so the picker and numeric masking can work as expected.
     grid.addEventListener(
+      "focus",
+      (e) => {
+        const t = e.target;
+        if (!t || !t.classList || !t.classList.contains("memory-date-input")) return;
+
+        const raw = (t.value || "").trim();
+        if (isValidMonthYearMMM(raw)) {
+          const mm = t.dataset.mmYYYY || mmmToMmYear(raw);
+          if (mm) t.value = mm;
+        }
+      },
+      true
+    );
+
+grid.addEventListener(
       "change",
       (e) => {
         const t = e.target;
@@ -977,6 +1030,15 @@ document.addEventListener("DOMContentLoaded", function () {
     return date.toLocaleString('en-US', { month: 'short' }).toUpperCase() + "-" + year;
   }
 
+  function normalizeMonthYearForPayload(value) {
+    const v = (value || "").trim();
+    if (!v) return "";
+    if (isValidMonthYearMMM(v)) return v.toUpperCase();
+    if (isValidMonthYear(v)) return formatMonthYear(v);
+    return v;
+  }
+
+
   /**
    * Submit handler (capture phase so we run before Webflow's own handler):
    * - First submit: intercept, upload to Cloudinary, then trigger a second submit
@@ -1056,7 +1118,7 @@ document.addEventListener("DOMContentLoaded", function () {
         memories.push({
           slot: i + 1,
           title: (titleInput.value || "").trim(),
-          date: formatMonthYear((dateInput.value || "").trim()),
+          date: normalizeMonthYearForPayload((dateInput.value || "").trim()),
           description: (descInput.value || "").trim(),
           secure_url: uploaded.secure_url,
           public_id: uploaded.public_id,
