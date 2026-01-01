@@ -260,7 +260,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     if (!isValidMonthYear(mmYYYY)) {
-      setFieldError(inputEl, "Use MM-YYYY (example: 09-2025).");
+      setFieldError(inputEl, "Use MMM-YYYY (example: OCT-2025).");
       return false;
     }
 
@@ -476,16 +476,20 @@ document.addEventListener("DOMContentLoaded", function () {
         ok = false;
       } else if (showPerFieldErrors) {
         clearFieldError(titleInput);
-      }
-
-      if (!dateVal) {
+      }      if (!dateVal) {
         if (showPerFieldErrors) setFieldError(dateInput, `Month/Year (Memory ${slot}) is required.`);
         ok = false;
-      } else if (!isValidMonthYear(dateVal)) {
-        if (showPerFieldErrors) setFieldError(dateInput, `Use MM-YYYY (example: 09-2025).`);
-        ok = false;
-      } else if (showPerFieldErrors) {
-        clearFieldError(dateInput);
+      } else {
+        const normalized = normalizeMonthYearForPayload(dateVal);
+        // Store the normalized value so downstream logic always sees MMM-YYYY
+        dateInput.value = normalized;
+
+        if (!isValidMonthYearMMM(normalized)) {
+          if (showPerFieldErrors) setFieldError(dateInput, `Use MMM-YYYY (example: OCT-2025).`);
+          ok = false;
+        } else if (showPerFieldErrors) {
+          clearFieldError(dateInput);
+        }
       }
 
       if (!descVal) {
@@ -826,6 +830,11 @@ grid.addEventListener(
       // Some browsers / autofill trigger change instead of input
       dateInput.addEventListener("change", () => {
         applyMonthYearMask(dateInput);
+        // If user typed/picked a valid MM-YYYY, normalize immediately to MMM-YYYY.
+        const v = (dateInput.value || "").trim();
+        if (isValidMonthYear(v) || isValidMonthYearMMM(v)) {
+          dateInput.value = normalizeMonthYearForPayload(v);
+        }
         updateFormState();
       });
     }
@@ -1155,6 +1164,24 @@ grid.addEventListener(
         if (snapUrlField) snapUrlField.value = "";
         if (snapPublicIdField) snapPublicIdField.value = "";
       }
+
+
+
+
+      // Sort memories by date (ascending). Tie-break by slot number.
+      memories.sort((a, b) => {
+        const aMM = isValidMonthYearMMM(a.date) ? mmmToMmYear(a.date) : a.date;
+        const bMM = isValidMonthYearMMM(b.date) ? mmmToMmYear(b.date) : b.date;
+
+        const ma = parseInt((aMM || "00-0000").split("-")[0], 10);
+        const ya = parseInt((aMM || "00-0000").split("-")[1], 10);
+        const mb = parseInt((bMM || "00-0000").split("-")[0], 10);
+        const yb = parseInt((bMM || "00-0000").split("-")[1], 10);
+
+        if (ya !== yb) return ya - yb;
+        if (ma !== mb) return ma - mb;
+        return (a.slot || 0) - (b.slot || 0);
+      });
 
 
 
