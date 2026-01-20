@@ -55,6 +55,51 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   })();
 
+
+  function populateAllTimezones(selectEl) {
+    if (!selectEl) return;
+
+    // Avoid duplicating if this runs more than once
+    if (selectEl.dataset.tzPopulated === "1") return;
+
+    let timezones = [];
+
+    // Modern browsers: full IANA tz list
+    if (typeof Intl !== "undefined" && typeof Intl.supportedValuesOf === "function") {
+      try {
+        timezones = Intl.supportedValuesOf("timeZone");
+      } catch (_) { }
+    }
+
+    // Fallback (older browsers): at least include user's local tz + UTC
+    if (!timezones.length) {
+      const local = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      timezones = Array.from(new Set(["UTC", local].filter(Boolean)));
+    }
+
+    // Sort for nicer UX
+    timezones.sort((a, b) => a.localeCompare(b));
+
+    // Build options
+    const frag = document.createDocumentFragment();
+
+    // Keep the existing placeholder
+    // (assumes first option is "Select timezone")
+    for (const tz of timezones) {
+      const opt = document.createElement("option");
+      opt.value = tz;
+      opt.textContent = tz;
+      frag.appendChild(opt);
+    }
+
+    selectEl.appendChild(frag);
+    selectEl.dataset.tzPopulated = "1";
+
+    // Default to user's timezone if available
+    const local = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (local) selectEl.value = local;
+  }
+
   // Delivery scheduling: only relevant when send-direct is checked
   (function setupDeliverySchedule() {
     const toggle = document.getElementById("send-direct-toggle");
@@ -68,6 +113,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const tzEl = document.getElementById("delivery-timezone");
 
     if (!toggle || !wrapper || !mode || !scheduleFields || !dateEl || !timeEl || !tzEl) return;
+
+    populateAllTimezones(tzEl);
 
     const setScheduleEnabled = (on) => {
       scheduleFields.hidden = !on;
@@ -139,8 +186,6 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   })();
-
-
 
 
   // From/To name: char counters (delegated, Webflow-proof)
