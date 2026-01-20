@@ -110,7 +110,7 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
 
-      const isScheduled = mode.value === "schedule";
+      const isScheduled = mode.value === "true";
       setScheduleEnabled(isScheduled);
       updateFormState();
     };
@@ -634,7 +634,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const deliveryTz = document.getElementById("delivery-timezone");
 
     const sendDirectOn = !!document.getElementById("send-direct-toggle")?.checked;
-    const scheduledOn = sendDirectOn && deliveryMode && deliveryMode.value === "schedule";
+    const scheduledOn = sendDirectOn && deliveryMode && deliveryMode.value === "true";
 
     if (scheduledOn) {
       ok = validateRequired(deliveryDate, "Delivery date") && ok;
