@@ -4,20 +4,170 @@
             <form id="memories-form" name="memories-form" method="post" data-name="Memories Form">
                 <!-- Header -->
                 <div class="memories-page-header">
-                    <div class="memories-page-kicker">Our Matching Memories</div>
-                    <h1 class="memories-page-heading">Upload your memories</h1>
+                    <div class="memories-page-kicker">Beta Testing</div>
+                    <h1 class="memories-page-heading">Our Matching Memories</h1>
                     <p class="memories-page-subtitle">
-                        Add 8 moments with a title, month/year, and a short description.
-                        We’ll turn them into a custom memory game board.
+                        Try it for free! Turn your relationship memories into a playful and loving memory matching game!
+                        <br><br>
+                        Add 8 of your favorite moments with your boo, adding a title, month/year, and a short
+                        description.
+                        We’ll turn them into a custom game, made just for the two of you!
+                        <br><br>
+                        We'd love to hear your thoughts, such as your opinions and ideas for improvement. Please use
+                        this form to share your feedback: <a
+                            href="https://docs.google.com/forms/d/e/1FAIpQLSd9YPELioRtEfJf2u7-oYAVDEu2U1WfDt0ozg3j6jkV237jbA/viewform?usp=publish-editor">Submit
+                            Feedback</a>
                     </p>
                     <!-- Hidden game session identifier used to link uploads, checkout, and game -->
                     <input id="game-session-id" name="game_session_id" type="hidden" />
                 </div>
                 <!-- Snapshot area start -->
                 <div class="memories-snapshot-area">
+
+                    <div class="video-container">
+                        <div class="video-embed-wrapper video-frame">
+
+                            <!-- Consent overlay -->
+                            <div class="video-consent-overlay" aria-hidden="true">
+                                <div class="video-consent-box">
+                                    <div class="video-consent-title">Video preview</div>
+                                    <div class="video-consent-text">
+                                        To play this video, please accept Marketing cookies.
+                                    </div>
+                                    <button class="video-consent-btn" type="button" onclick="Cookiebot.renew()">
+                                        Review cookie settings
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- YouTube (blocked until consent) -->
+                            <iframe data-cookieconsent="marketing"
+                                data-src="https://www.youtube-nocookie.com/embed/RV4ZgvSade8?autoplay=1&mute=1&playsinline=1&loop=1&playlist=RV4ZgvSade8&rel=0&modestbranding=1"
+                                title="Hi, I'm Boopi!" frameborder="0"
+                                allow="autoplay; encrypted-media; picture-in-picture; web-share" allowfullscreen
+                                loading="lazy">
+                            </iframe>
+
+                        </div>
+                    </div>
+
+                    <style>
+                        /* Center the video on the page */
+                        .video-container {
+                            width: 100%;
+                            display: flex;
+                            justify-content: center;
+                        }
+
+                        /* 16:9 YouTube card */
+                        .video-embed-wrapper {
+                            width: 100%;
+                            max-width: 900px;
+                            /* prevents full width */
+                            aspect-ratio: 16 / 9;
+                            position: relative;
+                            overflow: hidden;
+                        }
+
+                        /* Mobile */
+                        @media (max-width: 768px) {
+                            .video-embed-wrapper {
+                                max-width: 100%;
+                            }
+                        }
+
+                        .video-frame {
+                            border-radius: 20px;
+                            -webkit-mask-image: -webkit-radial-gradient(white, black);
+                        }
+
+                        /* Iframe */
+                        .video-embed-wrapper iframe {
+                            position: absolute;
+                            inset: 0;
+                            width: 100%;
+                            height: 100%;
+                            border: 0;
+                            display: block;
+                        }
+
+                        /* Cookie consent overlay */
+                        .video-consent-overlay {
+                            position: absolute;
+                            inset: 0;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            padding: 18px;
+                            text-align: center;
+                            z-index: 2;
+                            background: rgba(0, 0, 0, 0.35);
+                        }
+
+                        .video-consent-box {
+                            background: rgba(255, 255, 255, 0.92);
+                            border-radius: 16px;
+                            padding: 16px 14px;
+                            max-width: 320px;
+                            width: 100%;
+                        }
+
+                        .video-consent-title {
+                            font-weight: 700;
+                            margin-bottom: 6px;
+                        }
+
+                        .video-consent-text {
+                            font-size: 14px;
+                            line-height: 1.3;
+                            margin-bottom: 10px;
+                        }
+
+                        .video-consent-btn {
+                            font-size: 14px;
+                            padding: 10px 12px;
+                            border-radius: 12px;
+                            border: 0;
+                            cursor: pointer;
+                        }
+                    </style>
+
+                    <script>
+                        (function () {
+                            const containers = document.querySelectorAll('.video-embed-wrapper');
+                            containers.forEach(container => {
+                                const overlay = container.querySelector('.video-consent-overlay');
+                                const iframe = container.querySelector('iframe[data-cookieconsent]');
+                                if (!overlay || !iframe) return;
+
+                                iframe.addEventListener('load', () => {
+                                    overlay.style.display = 'none';
+                                });
+                            });
+                        })();
+                    </script>
+
+                    <script>
+                        // Hide overlay once Cookiebot has swapped data-src -> src and the iframe loads.
+                        (function () {
+                            const root = document.currentScript && document.currentScript.parentElement;
+                            const container = root ? root.querySelector('.video-square') : document.querySelector('.video-square');
+                            if (!container) return;
+
+                            const overlay = container.querySelector('.video-consent-overlay');
+                            const iframe = container.querySelector('iframe[data-cookieconsent]');
+
+                            if (!overlay || !iframe) return;
+
+                            iframe.addEventListener('load', () => {
+                                overlay.style.display = 'none';
+                            });
+                        })();
+                    </script>
+
                     <!-- Gift details -->
                     <div class="memories-gift-section">
-                        <h2 class="memories-gift-heading">Who is this game for?</h2>
+                        <h2 class="memories-gift-heading">Tell us about you and your partner</h2>
                         <p class="memories-gift-subtitle">
                             We’ll use this info for checkout and to personalize your memory game.
                         </p>
@@ -72,7 +222,51 @@
                                     Required only if you want us to send it directly to your recipient.
                                 </p>
                             </div>
+                            
+                            <!-- Delivery scheduling (only if send-direct is checked) -->
+                            <div class="memories-field" id="delivery-schedule-wrapper" hidden>
+                                <label for="delivery-mode" class="memories-label">Delivery</label>
+                                <select id="delivery-mode" name="delivery_mode" class="memories-input" disabled>
+                                    <option value="send_now" selected>Send now</option>
+                                    <option value="schedule">Schedule</option>
+                                </select>
 
+                                <p class="memories-help-text">
+                                    Choose when we should email the gift link to your recipient.
+                                </p>
+
+                                <div id="delivery-schedule-fields" hidden>
+                                    <div class="memories-field">
+                                        <label for="delivery-date" class="memories-label">Delivery date</label>
+                                        <input id="delivery-date" name="delivery_date" type="date"
+                                            class="memories-input" disabled />
+                                    </div>
+
+                                    <div class="memories-field">
+                                        <label for="delivery-time" class="memories-label">Delivery time</label>
+                                        <input id="delivery-time" name="delivery_time" type="time"
+                                            class="memories-input" disabled />
+                                    </div>
+
+                                    <div class="memories-field">
+                                        <label for="delivery-timezone" class="memories-label">Delivery timezone</label>
+                                        <select id="delivery-timezone" name="delivery_timezone" class="memories-input"
+                                            disabled>
+                                            <option value="" selected>Select timezone</option>
+                                            <option value="America/Los_Angeles">Pacific (US) — Los Angeles</option>
+                                            <option value="America/Denver">Mountain (US) — Denver</option>
+                                            <option value="America/Chicago">Central (US) — Chicago</option>
+                                            <option value="America/New_York">Eastern (US) — New York</option>
+                                            <option value="UTC">UTC</option>
+                                            <option value="America/Sao_Paulo">Brazil — São Paulo</option>
+                                            <option value="Europe/London">UK — London</option>
+                                            <option value="Europe/Paris">Europe — Paris</option>
+                                            <option value="Asia/Tokyo">Japan — Tokyo</option>
+                                            <option value="Australia/Sydney">Australia — Sydney</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
 
                         </div>
                     </div>

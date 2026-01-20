@@ -55,6 +55,92 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   })();
 
+  // Delivery scheduling: only relevant when send-direct is checked
+  (function setupDeliverySchedule() {
+    const toggle = document.getElementById("send-direct-toggle");
+
+    const wrapper = document.getElementById("delivery-schedule-wrapper");
+    const mode = document.getElementById("delivery-mode");
+
+    const scheduleFields = document.getElementById("delivery-schedule-fields");
+    const dateEl = document.getElementById("delivery-date");
+    const timeEl = document.getElementById("delivery-time");
+    const tzEl = document.getElementById("delivery-timezone");
+
+    if (!toggle || !wrapper || !mode || !scheduleFields || !dateEl || !timeEl || !tzEl) return;
+
+    const setScheduleEnabled = (on) => {
+      scheduleFields.hidden = !on;
+
+      dateEl.disabled = !on;
+      timeEl.disabled = !on;
+      tzEl.disabled = !on;
+
+      if (on) {
+        dateEl.setAttribute("required", "required");
+        timeEl.setAttribute("required", "required");
+        tzEl.setAttribute("required", "required");
+      } else {
+        dateEl.removeAttribute("required");
+        timeEl.removeAttribute("required");
+        tzEl.removeAttribute("required");
+
+        dateEl.value = "";
+        timeEl.value = "";
+        tzEl.value = "";
+      }
+    };
+
+    const apply = () => {
+      const sendDirectOn = !!toggle.checked;
+
+      // Entire section only exists when send-direct is on
+      wrapper.hidden = !sendDirectOn;
+      mode.disabled = !sendDirectOn;
+
+      if (!sendDirectOn) {
+        mode.value = "send_now";
+        setScheduleEnabled(false);
+        clearFieldError(mode);
+        clearFieldError(dateEl);
+        clearFieldError(timeEl);
+        clearFieldError(tzEl);
+        updateFormState();
+        return;
+      }
+
+      const isScheduled = mode.value === "schedule";
+      setScheduleEnabled(isScheduled);
+      updateFormState();
+    };
+
+    // Initialize
+    apply();
+
+    // When send-direct is toggled
+    document.addEventListener("input", (e) => {
+      if (e.target && e.target.id === "send-direct-toggle") apply();
+    });
+
+    // When delivery mode changes
+    document.addEventListener("change", (e) => {
+      if (e.target && e.target.id === "delivery-mode") apply();
+    });
+
+    // Keep submit state live
+    document.addEventListener("input", (e) => {
+      if (!e.target) return;
+      if (
+        e.target.id === "delivery-date" ||
+        e.target.id === "delivery-time" ||
+        e.target.id === "delivery-timezone"
+      ) {
+        updateFormState();
+      }
+    });
+  })();
+
+
 
 
   // From/To name: char counters (delegated, Webflow-proof)
@@ -476,7 +562,7 @@ document.addEventListener("DOMContentLoaded", function () {
         ok = false;
       } else if (showPerFieldErrors) {
         clearFieldError(titleInput);
-      }      if (!dateVal) {
+      } if (!dateVal) {
         if (showPerFieldErrors) setFieldError(dateInput, `Month/Year (Memory ${slot}) is required.`);
         ok = false;
       } else {
@@ -542,6 +628,25 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Memories required by product rules
     ok = validateMemoriesBlocks(true) && ok;
+    // Delivery schedule validation (only when send-direct is checked AND mode = schedule)
+    const deliveryMode = document.getElementById("delivery-mode");
+    const deliveryDate = document.getElementById("delivery-date");
+    const deliveryTime = document.getElementById("delivery-time");
+    const deliveryTz = document.getElementById("delivery-timezone");
+
+    const sendDirectOn = !!document.getElementById("send-direct-toggle")?.checked;
+    const scheduledOn = sendDirectOn && deliveryMode && deliveryMode.value === "schedule";
+
+    if (scheduledOn) {
+      ok = validateRequired(deliveryDate, "Delivery date") && ok;
+      ok = validateRequired(deliveryTime, "Delivery time") && ok;
+      ok = validateRequired(deliveryTz, "Delivery timezone") && ok;
+    } else {
+      // clear any stale errors
+      deliveryDate && clearFieldError(deliveryDate);
+      deliveryTime && clearFieldError(deliveryTime);
+      deliveryTz && clearFieldError(deliveryTz);
+    }
 
     return ok;
   }
@@ -564,6 +669,33 @@ document.addEventListener("DOMContentLoaded", function () {
       },
       true
     );
+
+    // Delivery schedule fields: validate on blur only when scheduling is active
+    document.addEventListener(
+      "blur",
+      (e) => {
+        if (!e.target) return;
+
+        const id = e.target.id;
+        if (id !== "delivery-date" && id !== "delivery-time" && id !== "delivery-timezone") return;
+
+        const sendDirectOn = !!document.getElementById("send-direct-toggle")?.checked;
+        const modeEl = document.getElementById("delivery-mode");
+        const schedulingOn = sendDirectOn && modeEl && modeEl.value === "schedule";
+
+        if (!schedulingOn) {
+          // If user toggled off scheduling, don't show errors for these
+          clearFieldError(e.target);
+          return;
+        }
+
+        if (id === "delivery-date") validateRequired(e.target, "Delivery date");
+        if (id === "delivery-time") validateRequired(e.target, "Delivery time");
+        if (id === "delivery-timezone") validateRequired(e.target, "Delivery timezone");
+      },
+      true
+    );
+
 
     // Toggle: re-check distinct rule when switched
     document.addEventListener("input", (e) => {
@@ -595,7 +727,7 @@ document.addEventListener("DOMContentLoaded", function () {
       true
     );
 
-    
+
     // Month/Year inputs: when focusing a formatted value (MMM-YYYY), convert back to MM-YYYY
     // so the picker and numeric masking can work as expected.
     grid.addEventListener(
@@ -613,7 +745,7 @@ document.addEventListener("DOMContentLoaded", function () {
       true
     );
 
-grid.addEventListener(
+    grid.addEventListener(
       "change",
       (e) => {
         const t = e.target;
@@ -1034,7 +1166,7 @@ grid.addEventListener(
 
   function formatMonthYear(input) {
     const [month, year] = input.split('-');
-  
+
     const date = new Date(year, month - 1); // month is 0-based
     return date.toLocaleString('en-US', { month: 'short' }).toUpperCase() + "-" + year;
   }
