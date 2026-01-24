@@ -226,10 +226,11 @@
                             <!-- Delivery scheduling (only if send-direct is checked) -->
                             <div class="memories-field" id="delivery-schedule-wrapper" hidden>
                                 <label for="delivery-mode" class="memories-label">Delivery</label>
-                                <select id="delivery-mode" name="delivery_mode" class="memories-input" disabled>
-                                    <option value="send_now" selected>Send now</option>
-                                    <option value="schedule">Schedule</option>
+                                <select id="delivery-mode" name="delivery_scheduled" class="memories-input" disabled>
+                                    <option value="false" selected>Send now</option>
+                                    <option value="true">Schedule</option>
                                 </select>
+
 
                                 <p class="memories-help-text">
                                     Choose when we should email the gift link to your recipient.
