@@ -100,7 +100,7 @@ document.addEventListener("DOMContentLoaded", function () {
       mode.disabled = !sendDirectOn;
 
       if (!sendDirectOn) {
-        mode.value = "send_now";
+        mode.value = "false";
         setScheduleEnabled(false);
         clearFieldError(mode);
         clearFieldError(dateEl);
@@ -682,7 +682,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const sendDirectOn = !!document.getElementById("send-direct-toggle")?.checked;
         const modeEl = document.getElementById("delivery-mode");
-        const schedulingOn = sendDirectOn && modeEl && modeEl.value === "schedule";
+        const schedulingOn = sendDirectOn && modeEl && modeEl.value === "true";
 
         if (!schedulingOn) {
           // If user toggled off scheduling, don't show errors for these
@@ -1321,16 +1321,35 @@ document.addEventListener("DOMContentLoaded", function () {
       // --- Build + upload JSON ---
       const customMessageValue = (document.getElementById("custom-message")?.value || "").trim();
 
+      // Delivery fields (only meaningful when sendDirectOn)
+      const deliveryModeEl = document.getElementById("delivery-mode");
+      const deliveryDateEl = document.getElementById("delivery-date");
+      const deliveryTimeEl = document.getElementById("delivery-time");
+      const deliveryTzEl = document.getElementById("delivery-timezone");
+
+      const deliveryScheduled =
+        sendDirectOn && deliveryModeEl && deliveryModeEl.value === "true";
+
       const jsonPayload = {
         sessionId: sessionIdLocal || null,
         totalMemories: ns.TOTAL_SLOTS,
+
         fromName: (fromNameInput?.value || "").trim(),
         toName: (toNameInput?.value || "").trim(),
         fromEmail: (liveFromEmail?.value || "").trim(),
+
         sendDirect: sendDirectOn,
         toEmail: (liveToEmail?.value || "").trim(),
+
+        // ✅ new fields for webhook-based fulfillment
+        deliveryScheduled,
+        deliveryDate: deliveryScheduled ? (deliveryDateEl?.value || "").trim() : "",
+        deliveryTime: deliveryScheduled ? (deliveryTimeEl?.value || "").trim() : "",
+        deliveryTimezone: deliveryScheduled ? (deliveryTzEl?.value || "").trim() : "",
+
         customMessage: customMessageValue,
         memories,
+
         snapshot: snapshotUploaded
           ? {
             secure_url: snapshotUploaded.secure_url,
