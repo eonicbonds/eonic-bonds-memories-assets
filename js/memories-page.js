@@ -70,6 +70,30 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (!toggle || !wrapper || !mode || !scheduleFields || !dateEl || !timeEl || !tzEl) return;
 
+    // ----- Flatpickr for delivery date -----
+    let deliveryDateFp = null;
+
+    if (window.flatpickr) {
+      deliveryDateFp = window.flatpickr(dateEl, {
+        disableMobile: true,
+        allowInput: true,
+        dateFormat: "Y-m-d",     // matches your placeholder + easy for Zapier
+        minDate: "today",
+        onOpen: () => {
+          // If the page stays open overnight, keep the min date correct
+          deliveryDateFp.set("minDate", "today");
+        },
+        onChange: () => {
+          clearFieldError(dateEl);
+          updateFormState();
+        },
+        onClose: () => {
+          updateFormState();
+        },
+      });
+    }
+
+
     const setScheduleEnabled = (on) => {
       scheduleFields.hidden = !on;
 
@@ -87,6 +111,8 @@ document.addEventListener("DOMContentLoaded", function () {
         tzEl.removeAttribute("required");
 
         dateEl.value = "";
+        if (deliveryDateFp) deliveryDateFp.clear();
+        if (deliveryDateFp) deliveryDateFp.close();
         timeEl.value = "";
         tzEl.value = "";
       }
