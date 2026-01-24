@@ -373,6 +373,7 @@ document.addEventListener("DOMContentLoaded", function () {
         disableMobile: true,
         allowInput: true,
         dateFormat: "m-Y", // produces MM-YYYY
+        maxDate: "today",
         altInput: false,   // keep a single source of truth: inputEl.value
         plugins: [
           new window.monthSelectPlugin({
