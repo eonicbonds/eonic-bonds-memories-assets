@@ -370,6 +370,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     try {
       window.flatpickr(inputEl, {
+        disableMobile: true,
         allowInput: true,
         dateFormat: "m-Y", // produces MM-YYYY
         altInput: false,   // keep a single source of truth: inputEl.value
