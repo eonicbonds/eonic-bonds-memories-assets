@@ -1299,14 +1299,14 @@ document.addEventListener("DOMContentLoaded", function () {
         setStatus(`Uploading memories… (${i + 1}/${ns.TOTAL_SLOTS})`, "success");
       }
 
-      setStatus("Creating your review snapshot…", "success");
+      // setStatus("Creating your review snapshot…", "success");
 
       let snapshotUploaded = null;
-      try {
-        snapshotUploaded = await captureAndUploadSnapshot();
-      } catch (err) {
-        console.warn("Snapshot generation failed (continuing without it):", err);
-      }
+      // try {
+      //   snapshotUploaded = await captureAndUploadSnapshot();
+      // } catch (err) {
+      //   console.warn("Snapshot generation failed (continuing without it):", err);
+      // }
 
       const snapUrlField = document.getElementById("cloudinary-snapshot-url");
       const snapPublicIdField = document.getElementById("cloudinary-snapshot-public-id");
