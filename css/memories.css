@@ -44,7 +44,7 @@
 /* GIFT DETAILS SECTION */
 
 .memories-gift-section {
-  margin-top: 24px;
+  margin-top: 0px;
   margin-bottom: 32px;
 }
 
@@ -73,7 +73,7 @@
 .memories-label {
   display: block;
   font-family: Quicksand, sans-serif;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--dark-purple);
   margin-bottom: 4px;
