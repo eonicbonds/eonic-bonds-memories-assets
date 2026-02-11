@@ -66,7 +66,7 @@
 .memories-gift-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  gap: 10px;
   margin-bottom: 16px;
 }
 
@@ -81,7 +81,7 @@
 
 .memories-help-text {
   font-family: Quicksand, sans-serif;
-  font-size: 11px;
+  font-size: 13px;
   color: rgba(81, 66, 118, 0.8);
   margin-top: 4px;
 }
