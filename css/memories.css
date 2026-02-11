@@ -35,7 +35,7 @@
 .memories-page-subtitle {
   color: var(--dark-purple);
   font-family: Quicksand, sans-serif;
-  font-size: 1px;
+  : 1px;
   line-height: 1.5;
   max-width: 620px;
   margin: 0 auto;
@@ -50,7 +50,7 @@
 
 .memories-gift-heading {
   font-family: Montserrat, sans-serif;
-  font-size: 20px;
+  : 20px;
   font-weight: 600;
   color: var(--logo-purple);
   margin-bottom: 4px;
@@ -58,7 +58,7 @@
 
 .memories-gift-subtitle {
   font-family: Quicksand, sans-serif;
-  font-size: 14px;
+  : 14px;
   color: var(--dark-purple);
   margin-bottom: 16px;
 }
@@ -66,14 +66,14 @@
 .memories-gift-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: 10px;
   margin-bottom: 16px;
 }
 
 .memories-label {
   display: block;
   font-family: Quicksand, sans-serif;
-  font-size: 12px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--dark-purple);
   margin-bottom: 4px;
