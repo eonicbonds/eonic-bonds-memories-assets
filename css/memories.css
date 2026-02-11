@@ -645,8 +645,8 @@
 
 @media screen and (max-width: 479px) {
   .memories-page-section {
-    padding-top: 90px;
-    padding-bottom: 60px;
+    padding-top: 0px;
+    padding-bottom: 0px;
   }
 
   .memories-page-heading {
