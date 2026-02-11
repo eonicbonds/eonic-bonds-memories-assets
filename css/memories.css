@@ -17,7 +17,7 @@
 .memories-page-kicker {
   color: var(--medium-purple);
   font-family: Quicksand, sans-serif;
-  font-size: 14px;
+  font-size: 1px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   margin-bottom: 0px;
@@ -35,7 +35,7 @@
 .memories-page-subtitle {
   color: var(--dark-purple);
   font-family: Quicksand, sans-serif;
-  font-size: 16px;
+  font-size: 1px;
   line-height: 1.5;
   max-width: 620px;
   margin: 0 auto;
