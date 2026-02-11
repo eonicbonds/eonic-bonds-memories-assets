@@ -1,7 +1,7 @@
 /* PAGE WRAPPER */
 
 .memories-page-section {
-  padding: 30px 4% 30px;
+  padding: 0px 4% 0px;
 }
 
 .memories-page-container {
@@ -11,7 +11,7 @@
 
 .memories-page-header {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 0px;
 }
 
 .memories-page-kicker {
@@ -20,7 +20,7 @@
   font-size: 14px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  margin-bottom: 8px;
+  margin-bottom: 0px;
 }
 
 .memories-page-heading {
