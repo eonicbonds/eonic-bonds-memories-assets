@@ -50,7 +50,7 @@
 
 .memories-gift-heading {
   font-family: Montserrat, sans-serif;
-  : 16px;
+  : 20px;
   font-weight: 600;
   color: var(--logo-purple);
   margin-bottom: 4px;
@@ -650,7 +650,7 @@
   }
 
   .memories-page-heading {
-    font-size: 26px;
+    font-size: 20px;
   }
 
   .memories-page-subtitle {
