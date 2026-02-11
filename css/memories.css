@@ -66,14 +66,14 @@
 .memories-gift-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 14px;
   margin-bottom: 16px;
 }
 
 .memories-label {
   display: block;
   font-family: Quicksand, sans-serif;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--dark-purple);
   margin-bottom: 4px;
@@ -162,7 +162,7 @@
 
 .memory-title-label {
   font-family: Quicksand, sans-serif;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--logo-purple);
 }
